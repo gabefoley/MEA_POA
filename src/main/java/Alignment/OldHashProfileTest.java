@@ -43,7 +43,7 @@ public class OldHashProfileTest {
 
         HashProfile simplerProfile = new HashProfile("G");
 
-        POGraphAlignment alignment = new POGraphAlignment(three1, three2, -2, -1, Blosum62.getMatrix(), false);
+//        POGraphAlignment alignment = new POGraphAlignment(three1, three2, -2, -1, Blosum62.getMatrix(), false);
 //        POGraphAlignment alignment = new POGraphAlignment(simpleProfile, simplerProfile, -2, -1, Blosum62.getMatrix(), false);
 
 

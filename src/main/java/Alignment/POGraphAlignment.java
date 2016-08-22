@@ -27,6 +27,7 @@ public class POGraphAlignment {
     private boolean MEA;
     private int profileMatrixHeight;
 
+    //TODO: Remove String based method and only allow for profile based method
     public POGraphAlignment(String seq1, String seq2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
         this.seq1 = seq1;
         this.seq2 = seq2;
@@ -87,7 +88,7 @@ public class POGraphAlignment {
             matches[j] = matchScore;
 
         }
-        
+
         return matches;
     }
 
@@ -99,6 +100,7 @@ public class POGraphAlignment {
         double[] matches = new double[profile2Length];
 
 
+        //TODO: Normalise match score
         for (int i = 0; i < profile2Length; i++) {
             double totalScore = 0;
             for (Character name : profile1.getProfileArray().get(index).keySet()) {
@@ -110,15 +112,15 @@ public class POGraphAlignment {
                         if (name2 != '-') {
                             Character profile2Name = name2;
                             int profile2Value = profile2.getProfileArray().get(i).get(name2).getValue();
-                            System.out.println(profile1Value);
-                            System.out.println(profile2Value);
+//                            System.out.println(profile1Value);
+//                            System.out.println(profile2Value);
                             double matchScore = Blosum62.getDistance(profile1Name, profile2Name);
                             totalScore += profile1Value * profile2Value * matchScore;
                             matches[i] = totalScore;
 
-                            System.out.println("Postion: " + i);
-                            System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
-                            System.out.println("Profile 2 residue: " + profile2Name + " and count: " + profile2Value);
+//                            System.out.println("Postion: " + i);
+//                            System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
+//                            System.out.println("Profile 2 residue: " + profile2Name + " and count: " + profile2Value);
                         }
                     }
                 }
@@ -126,9 +128,9 @@ public class POGraphAlignment {
             }
         }
 
-        System.out.println("------------");
+//        System.out.println("------------");
 
-        System.out.println(matches);
+//        System.out.println(matches);
         return matches;
     }
 
@@ -378,8 +380,8 @@ public class POGraphAlignment {
 //            }
 //        }
 
-        System.out.println(seq1output);
-        System.out.println(seq2output);
+//        System.out.println(seq1output);
+//        System.out.println(seq2output);
 
 
         return matchesIndex;
@@ -431,7 +433,7 @@ public class POGraphAlignment {
 
             // Get array of scores for matching current node with each position in sequence
             double[] matchPoints = new double[seq2.length()];
-            
+
             if (MEA){
                 matchPoints = this.getMEAMatchScore(i, seq2);
             }
@@ -536,8 +538,8 @@ public class POGraphAlignment {
                 }
             }
         }
-        System.out.println("Scores matrix is ");
-        PairHMM.printMatrix(scores);
+//        System.out.println("Scores matrix is ");
+//        PairHMM.printMatrix(scores);
 
         return backtrack(scores, backStrIdx, backGraphIdx);
 
@@ -703,12 +705,15 @@ public class POGraphAlignment {
                 }
             }
         }
-        System.out.println("Scores matrix is ");
-        PairHMM.printMatrix(scores);
+//        System.out.println("Scores matrix is ");
+//        PairHMM.printMatrix(scores);
 
         return backtrack(scores, backStrIdx, backGraphIdx);
 
     }
+
+
+
 
     /**
      * Method to add two arrays together by adding the contents of each respective index in each array together.
@@ -717,7 +722,11 @@ public class POGraphAlignment {
      * @param firstArray first array to add
      * @param secondArray second array to add
      * @return int array with the add
+     *
+     *
      */
+
+    //TODO: Move this helper method to the matrix helper methods
     public static double[] addArrays ( double[] firstArray, double[] secondArray){
 
         double[] shorterArray = (firstArray.length < secondArray.length ? firstArray: secondArray);

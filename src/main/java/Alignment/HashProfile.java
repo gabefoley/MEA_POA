@@ -104,12 +104,14 @@ public class HashProfile {
     public void fillProfileArray(HashProfile profile){
         for (int i = 0; i < profile.profileArray.size(); i++) {
             for (Character residue : profile.getProfileArray().get(i).keySet()) {
-                MutableInt count = profileArray.get(i).get(residue);
-                if (count == null) {
-                    profileArray.get(i).put(residue, new MutableInt());
+                if (!residue.equals("-")) {
+                    MutableInt count = profileArray.get(i).get(residue);
+                    if (count == null) {
+                        profileArray.get(i).put(residue, new MutableInt());
 
-                } else {
-                    count.increment();
+                    } else {
+                        count.increment();
+                    }
                 }
             }
         }
@@ -166,7 +168,8 @@ public class HashProfile {
             seqOutput += seq + "\n";
 
         }
-        return seqOutput;
+        // Remove the final new line
+        return seqOutput.replaceAll("\\n+$", "");
 
     }
 

@@ -495,6 +495,7 @@ public class PairHMM {
         printMatrix(vY);
     }
 
+    // TODO: Move matrix operations out into their own class
     public static void printMatrix(double[][] matrix) {
         NumberFormat formatter = new DecimalFormat();
         formatter = new DecimalFormat("0.#####E0");
