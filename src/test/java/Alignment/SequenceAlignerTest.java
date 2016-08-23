@@ -1,7 +1,6 @@
 package Alignment;
 
 import SubstitutionModels.Blosum62;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -14,7 +13,7 @@ import static org.junit.Assert.*;
  *
  */
 
-public class POGraphAlignmentTest {
+public class SequenceAlignerTest {
 //    private HashProfile first;
 //    private HashProfile second;
 //    private HashProfile third;
@@ -45,7 +44,7 @@ public class POGraphAlignmentTest {
         HashProfile fourth = new HashProfile("-WWG");
 
         HashProfile firstJoined = new HashProfile(first, second);
-        HashProfile secondJoined = new HashProfile(third, fourth);        POGraphAlignment firstAlignment = new POGraphAlignment(first, second, -2, -1, Blosum62.getMatrix(), false);
+        HashProfile secondJoined = new HashProfile(third, fourth);        SequenceAligner firstAlignment = new SequenceAligner(first, second, -2, -1, Blosum62.getMatrix(), false);
 
 
     }
@@ -58,7 +57,7 @@ public class POGraphAlignmentTest {
         HashProfile fourth = new HashProfile("-WWG");
 
         HashProfile firstJoined = new HashProfile(first, second);
-        HashProfile secondJoined = new HashProfile(third, fourth);        POGraphAlignment secondAlignment = new POGraphAlignment(third, fourth, -2, -1, Blosum62.getMatrix(), false);
+        HashProfile secondJoined = new HashProfile(third, fourth);        SequenceAligner secondAlignment = new SequenceAligner(third, fourth, -2, -1, Blosum62.getMatrix(), false);
     }
 
 
@@ -72,7 +71,7 @@ public class POGraphAlignmentTest {
 
         HashProfile firstJoined = new HashProfile(first, second);
         HashProfile secondJoined = new HashProfile(third, fourth);
-        POGraphAlignment joinedAlignment = new POGraphAlignment(secondJoined, firstJoined, -2, -1, Blosum62.getMatrix(), false);
+        SequenceAligner joinedAlignment = new SequenceAligner(secondJoined, firstJoined, -2, -1, Blosum62.getMatrix(), false);
 
         ArrayList<Integer> expectedStringMatches = new ArrayList<Integer>();
         expectedStringMatches.add(0);
@@ -90,6 +89,23 @@ public class POGraphAlignmentTest {
         // Assert that the matches array is correct
         assertEquals(joinedAlignment.getStringIndexes(), expectedStringMatches);
         assertEquals(joinedAlignment.getNodeIndexes(), expectedNodeMatches);
+
+
+    }
+
+    @Test
+    public void testNucleotideAlignment(){
+        HashProfile first = new HashProfile("AATGTGGG");
+        HashProfile second = new HashProfile("TTGGG");
+        HashProfile third = new HashProfile("CCAATG");
+        HashProfile fourth = new HashProfile("CAACCG");
+
+
+
+        HashProfile firstJoined = new HashProfile(first, second);
+        HashProfile secondJoined = new HashProfile(third, fourth);
+        SequenceAligner joinedAlignment = new SequenceAligner(first, second, -2, -1, Blosum62.getMatrix(), false);
+
 
 
     }

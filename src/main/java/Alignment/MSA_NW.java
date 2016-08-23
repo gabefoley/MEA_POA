@@ -17,19 +17,25 @@ public class MSA_NW {
 
     public static void main(String[] args) throws Exception {
         System.out.println("Starting...");
-        String first = "AGTG";
+        String first = "AATGTGGG";
 
-        String second = "AGCAG";
+        String second = "TTGGG";
 
-        String third = "GCAG";
+        String third = "CCAATG";
+
+        String fourth = "CAACCG";
+
 
         ProteinSequence firstProt = new ProteinSequence(first, AminoAcidCompoundSet.getAminoAcidCompoundSet());
         ProteinSequence secondProt = new ProteinSequence(second, AminoAcidCompoundSet.getAminoAcidCompoundSet());
         ProteinSequence thirdProt = new ProteinSequence(third, AminoAcidCompoundSet.getAminoAcidCompoundSet());
+        ProteinSequence fourthProt = new ProteinSequence(fourth, AminoAcidCompoundSet.getAminoAcidCompoundSet());
+
         List<ProteinSequence> list = new ArrayList<ProteinSequence>();
         list.add(firstProt);
         list.add(secondProt);
-        list.add(thirdProt);
+//        list.add(thirdProt);
+//        list.add(fourthProt);
         Profile<ProteinSequence, AminoAcidCompound> profile = Alignments.getMultipleSequenceAlignment(list);
         System.out.printf("Clustalw:%n%s%n", profile);
         ConcurrencyTools.shutdown();

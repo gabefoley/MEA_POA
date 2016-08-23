@@ -41,7 +41,7 @@ public class ProfilePairHMMTest {
     @Test
     public void testMEA(){
         ProfilePairHMM pairHMM = createSimpleProfile();
-        
+
 
     }
 

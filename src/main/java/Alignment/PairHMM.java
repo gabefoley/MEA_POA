@@ -1,13 +1,10 @@
 package Alignment;
 
 import SubstitutionModels.ExampleModel;
-import com.sun.xml.internal.bind.v2.TODO;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by gabe on 3/05/2016.
@@ -482,7 +479,7 @@ public class PairHMM {
         double[][] bM = this.backwardAlgorithm();
         double[][] pM = calcPosteriorMatrix(fM, bM);
 
-        POGraphAlignment poGraphAlignment = new POGraphAlignment(seq1, seq2, 0, 0, pM, true);
+        SequenceAligner sequenceAligner = new SequenceAligner(seq1, seq2, 0, 0, pM, true);
 
 
 

@@ -90,6 +90,19 @@ public class ProfilePairHMM {
 
         double totalScore = 0;
         double totalCount = 0;
+        //TODO: Check calculation of profileCounts - maybe add it back into the loop
+        //TODO: Check maths on summing profiles
+
+        for (Character residue : profile1.getProfileArray().get(i-1).keySet()){
+            totalCount += profile1.getProfileArray().get(i-1).get(residue).getValue();
+        }
+
+        for (Character residue : profile2.getProfileArray().get(j-1).keySet()){
+            totalCount += profile2.getProfileArray().get(j-1).get(residue).getValue();
+        }
+
+        double profile1Count = profile1.getProfileArray().get(i-1).keySet().size();
+        double profile2Count = profile2.getProfileArray().get(i-1).keySet().size();
         for (Character name : profile1.getProfileArray().get(i - 1).keySet()) {
             if (name != '-') {
                 Character profile1Name = name;
@@ -105,12 +118,13 @@ public class ProfilePairHMM {
                         double matchScore = ExampleModel.getDistance(profile1Name, profile2Name);
 //                        double matchScore = 2;
                         totalScore += profile1Value * profile2Value * matchScore;
-                        totalCount += profile1Value + profile2Value;
+//                        totalCount += profile2Value;
 
 //                        System.out.println("Postion: " + (i - 1));
 //                        System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
 //                        System.out.println("Profile 2 residue: " + profile2Name + " and count: " + profile2Value);
                     }
+//                    totalCount += profile1Value;
                 }
             }
 
@@ -119,7 +133,11 @@ public class ProfilePairHMM {
 
 
 //        double emissionM = ExampleModel.getDistance(profile1.charAt(i-1), profile2.charAt(j - 1));
-        double emissionM = totalScore / totalCount;
+        System.out.println("I and J:" + i + "" + j);
+        System.out.println("Total count is " + totalCount);
+//        double emissionM = totalScore / (profile1Count * profile2Count);
+        double emissionM = totalScore / (totalCount);
+
 
 
         // Get the actual costs for transitioning for each of the states
@@ -154,6 +172,8 @@ public class ProfilePairHMM {
 
     // Fill out the gap in X matrix
     public void fillVX(int i, int j, double[][] vM, double[][] vX, String[][] tracebackX) {
+
+        //TODO: Remove magic number here and in similar places
         double emissionX = 0.25;
 
 
@@ -204,7 +224,7 @@ public class ProfilePairHMM {
 
     public void traceback(){
 
-//        printAllMatrices();
+        printAllMatrices();
 
 //        String seq1Output = "";
 //        String seq2Output = "";
@@ -506,16 +526,18 @@ public class ProfilePairHMM {
 //        double[][] bM = this.backwardAlgorithm();
 //        double[][] pM = calcPosteriorMatrix(fM, bM);
 //
-//        POGraphAlignment poGraphAlignment = new POGraphAlignment(profile1, profile2, 0, 0, pM, true);
+//        SequenceAligner poGraphAlignment = new SequenceAligner(profile1, profile2, 0, 0, pM, true);
 //
 //
 //
 //    }
 
     public void printAllMatrices(){
-
+        System.out.println("vM");
         printMatrix(vM);
+        System.out.println("vX");
         printMatrix(vX);
+        System.out.println("vY");
         printMatrix(vY);
     }
 

@@ -11,11 +11,6 @@ import java.util.Map;
 /**
  * Created by gabe on 15/08/2016.
  *
- *  # 0 1 2 3 4 5
- *  A
- *  G
- *  C
- *  T
  *
  */
 
@@ -89,13 +84,15 @@ public class HashProfile {
 
 
         for (int i = 0; i < seq.length(); i++) {
-            MutableInt count = profileArray.get(i).get(seq.charAt(i));
+            if (!(seq.charAt(i) == ('-'))) {
+                MutableInt count = profileArray.get(i).get(seq.charAt(i));
 
-            if (count == null) {
-                profileArray.get(i).put(seq.charAt(i), new MutableInt());
+                if (count == null) {
+                    profileArray.get(i).put(seq.charAt(i), new MutableInt());
 
-            } else {
-                count.increment();
+                } else {
+                    count.increment();
+                }
             }
         }
 
@@ -119,10 +116,6 @@ public class HashProfile {
     }
 
     public void addGaps(List<Integer> gapPos){
-
-        for (int pos: gapPos){
-            System.out.println(pos);
-        }
 
         for (int i = 0; i < this.getSequences().size(); i++){
             String seq = this.getSequences().get(i);

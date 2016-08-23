@@ -6,10 +6,11 @@ import SubstitutionModels.Blosum62;
 import java.util.*;
 
 import static java.lang.Math.max;
-import Alignment.SimpleProfile;
+
+import SubstitutionModels.ExampleModel;
 
 
-public class POGraphAlignment {
+public class SequenceAligner {
 
     /**
      * Class for aligning a sequence to a PO Graph
@@ -28,25 +29,30 @@ public class POGraphAlignment {
     private int profileMatrixHeight;
 
     //TODO: Remove String based method and only allow for profile based method
-    public POGraphAlignment(String seq1, String seq2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
-        this.seq1 = seq1;
-        this.seq2 = seq2;
-        this.openGapPenalty = openGapPenalty;
-        this.extendGapPenalty = extendGapPenalty;
-        this.stringIndexes = new ArrayList<Integer>();
-        this.nodeIndexes = new ArrayList<Integer>();
-        this.matrix = matrix;
-        this.MEA = MEA;
-        List<List<Integer>> matches = this.alignSeqToGraph();
-        this.stringIndexes = matches.get(0);
-        this.nodeIndexes = matches.get(1);
+    public SequenceAligner(String seq1, String seq2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
+
+        HashProfile profile1 = new HashProfile(seq1);
+        HashProfile profile2 = new HashProfile(seq2);
+
+        SequenceAligner profileAlignment = new SequenceAligner(profile1, profile2, openGapPenalty, extendGapPenalty, matrix, MEA);
+//        this.seq1 = seq1;
+//        this.seq2 = seq2;
+//        this.openGapPenalty = openGapPenalty;
+//        this.extendGapPenalty = extendGapPenalty;
+//        this.stringIndexes = new ArrayList<Integer>();
+//        this.nodeIndexes = new ArrayList<Integer>();
+//        this.matrix = matrix;
+//        this.MEA = MEA;
+//        List<List<Integer>> matches = this.alignSeqToGraph();
+//        this.stringIndexes = matches.get(0);
+//        this.nodeIndexes = matches.get(1);
 
 
 
 
     }
 
-    public POGraphAlignment(HashProfile profile1, HashProfile profile2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
+    public SequenceAligner(HashProfile profile1, HashProfile profile2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
         this.profile1 = profile1;
         this.profile2 = profile2;
         this.openGapPenalty = openGapPenalty;
@@ -100,9 +106,10 @@ public class POGraphAlignment {
         double[] matches = new double[profile2Length];
 
 
-        //TODO: Normalise match score
+        //TODO: Normalise match score at individual index
         for (int i = 0; i < profile2Length; i++) {
             double totalScore = 0;
+            double totalCount = 0;
             for (Character name : profile1.getProfileArray().get(index).keySet()) {
                 if (name != '-') {
                     Character profile1Name = name;
@@ -114,9 +121,9 @@ public class POGraphAlignment {
                             int profile2Value = profile2.getProfileArray().get(i).get(name2).getValue();
 //                            System.out.println(profile1Value);
 //                            System.out.println(profile2Value);
-                            double matchScore = Blosum62.getDistance(profile1Name, profile2Name);
+                            double matchScore = ExampleModel.getDistance(profile1Name, profile2Name);
                             totalScore += profile1Value * profile2Value * matchScore;
-                            matches[i] = totalScore;
+                            matches[i] = totalScore / totalCount;
 
 //                            System.out.println("Postion: " + i);
 //                            System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
