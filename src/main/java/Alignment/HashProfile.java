@@ -160,7 +160,13 @@ public class HashProfile {
     public String getColumn(int pos){
         String columnList = "";
         for (String seq: this.getSequences()){
-            columnList += seq.charAt(pos);
+
+            if (pos <= seq.length()) {
+                columnList += seq.charAt(pos);
+            }
+            else {
+                columnList += "X";
+            }
 
         }
 

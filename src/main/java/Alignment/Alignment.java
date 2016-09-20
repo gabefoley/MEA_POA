@@ -62,7 +62,7 @@ public class Alignment {
     public double[] getMatchScore(char base, String seqvec) {
         double[] matches = new double[seqvec.length()];
         for (int i = 0; i < seqvec.length(); i++) {
-            double matchScore = Blosum62Probs.getDistance(seqvec.charAt(i), base);
+            double matchScore = Blosum62.getDistance(seqvec.charAt(i), base);
             matches[i] = matchScore;
         }
 
@@ -127,7 +127,12 @@ public class Alignment {
                             int profile2Value = profile2.getProfileArray().get(i).get(name2).getValue();
 //                            System.out.println(profile1Value);
 //                            System.out.println(profile2Value);
-                            double matchScore = Blosum62Probs.getDistance(profile1Name, profile2Name);
+
+                            if (profile1Name == -1 || profile2Name == -1){
+                                System.out.println("UMMM");
+                            }
+
+                            double matchScore = Blosum62.getDistance(profile1Name, profile2Name);
                             totalScore += profile1Value * profile2Value * matchScore;
                             matches[i] = totalScore / totalCount;
 
@@ -234,7 +239,20 @@ public class Alignment {
         }
 
         int[][] backStrIdx = new int[l1 + 1][l2 + 1];
+
+        for (int i = 0; i <l2; i++){
+            backStrIdx[0][i+1] = i;
+        }
+
         int[][] backGraphIdx = new int[l1 + 1][l2 + 1];
+
+        for (int i = 0; i <l1; i++){
+            backGraphIdx[i + 1][0] = i;
+        }
+
+
+
+
 
         List<Object> initialisedData = new ArrayList<Object>();
         initialisedData.add(nodeIDToIndex);
@@ -260,6 +278,7 @@ public class Alignment {
 
 
         //TODO: Scores only recording one optimal path - see simpleProfile vs simplerProfile 19/08/2016
+
         int besti = scores.length;
         int bestj = scores[0].length;
         String seq1output = "";
@@ -290,9 +309,10 @@ public class Alignment {
             // Get the i and j coordinates of the cell to move to
             int nexti = backGrphIdx[besti][bestj];
             int nextj = backStrIdx[besti][bestj];
+
             curstrIdx = bestj - 1;
 
-            besti = (besti == 0) ? 1 : besti;
+//            besti = (besti == 0) ? 1 : besti;
             curnodeIdx = besti - 1;
 
             if (nextj != bestj) {
@@ -770,5 +790,38 @@ public class Alignment {
             finalArray[i] = longerArray[i];
         }
         return finalArray;
+    }
+
+
+    //TODO: Remove printMatrix to helper Class
+    public static void printMatrix(double[][] matrix) {
+
+
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[0].length; j++) {
+                System.out.print(String.format("  %-10s", matrix[i][j]) + "|");
+            }
+            System.out.println();
+
+        }
+
+        System.out.println();
+
+    }
+
+    //TODO: Remove printMatrix to helper Class
+    public static void printMatrix(int[][] matrix) {
+
+
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[0].length; j++) {
+                System.out.print(String.format("  %-10s", matrix[i][j]) + "|");
+            }
+            System.out.println();
+
+        }
+
+        System.out.println();
+
     }
 }

@@ -53,6 +53,8 @@ public class AutoBench {
             // For each file in the reference directory
             for (String input : inputs) {
 
+                System.out.println("Reading from file : " + input);
+
                 ArrayList<String[]> refAlignment = getSeqs(refDir, input);
                 ArrayList<String[]> seqs = getSeqs(inputDir, input);
 
@@ -69,30 +71,83 @@ public class AutoBench {
                 // Get MSA
                 HashProfile MSA = getMSA(seqs, multiGapOpen, multiGapExtend);
 
-                System.out.println(bioJavaMSA);
-
-                System.out.println("--------------------------");
-
-
-                for (String[] seq: refAlignment){
-                    System.out.println(seq[1]);
-                }
-
-                System.out.println("--------------------------");
-
-
-                System.out.println(MSA);
+//                System.out.println(bioJavaMSA);
+//
+//                System.out.println("--------------------------");
+//
+//
+//                for (String[] seq: refAlignment){
+//                    System.out.println(seq[1]);
+//                }
+//
+//                System.out.println("--------------------------");
+//
+//
+//                System.out.println(MSA);
 
                 // Get the good columns from calculated alignment
+                int msaCount = 0;
+                int bioJavaMSACount = 0;
 
-                for (String[] goodCol: goodCols){
-                    System.out.println(goodCol[0]);
-                    System.out.println(goodCol[1]);
+                for (String[] goodCol: goodCols) {
 
-                    System.out.println(bioJavaMSA.getCompoundsAt(Integer.valueOf(goodCol[0]) + 1));
-                    System.out.println(MSA.getColumn(Integer.valueOf(goodCol[0])));
+                    if (goodCol[1].equals(MSA.getColumn(Integer.valueOf(goodCol[0])))) {
+                        msaCount += 1;
+                    }
+
+
+                    String bioJavaMSAColOrdered = "";
+
+                    if (bioJavaMSA.getCompoundsAt(Integer.valueOf(goodCol[0]) + 1) != null){
+                        List<AminoAcidCompound> bioJavaMSACol = bioJavaMSA.getCompoundsAt(Integer.valueOf(goodCol[0]) + 1);
+
+//                        bioJavaMSAColOrdered = "";
+                        for (AminoAcidCompound aa : bioJavaMSACol){
+                            bioJavaMSAColOrdered += aa;
+                        }
+
+                        char[] charArray = bioJavaMSAColOrdered.toCharArray();
+
+                        char temp = charArray[1];
+                        charArray[1] = charArray[2];
+                        charArray[2] = temp;
+
+                        bioJavaMSAColOrdered = new String (charArray);
+                    }
+
+                    if (goodCol[1].equals(bioJavaMSAColOrdered)) {
+                        bioJavaMSACount += 1;
+                    }
+
+
+
+
+
+
+
+
+
+
+//                    System.out.println(goodCol[0]);
+//                    System.out.println(goodCol[1]);
+//
+//                    System.out.println(bioJavaMSA.getCompoundsAt(Integer.valueOf(goodCol[0]) + 1));
+//                    System.out.println(bioJavaMSAColOrdered);
+//                    System.out.println(MSA.getColumn(Integer.valueOf(goodCol[0])));
 
                 }
+
+                double msaCS = (double) msaCount / goodCols.size() * 100.0;
+                double bioJavaMSACS = (double) bioJavaMSACount / goodCols.size() * 100.0;
+
+
+                System.out.printf("MSA Column Score for file " + input + " is: %.2f%%%n ", msaCS);
+                System.out.printf("BioJava MSA Column Score for file " + input + " is: %.2f%%%n ",  bioJavaMSACS);
+                System.out.println();
+
+
+
+
 
 
                 // Compare calculated alignment to reference alignment

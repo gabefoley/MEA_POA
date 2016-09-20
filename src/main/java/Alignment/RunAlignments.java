@@ -67,11 +67,16 @@ public class RunAlignments {
 //        String multiSeq3 = "CTGGGA";
 //        String multiSeq4 = "ATGA";
 
+        String multiSeq1 = "GMKKWPR";
+        String multiSeq2 = "WPGMSVTNDC";
+        String multiSeq3 = "NAREERED";
+        String multiSeq4 = "DDPGA";
 
-        String multiSeq1 = "GKGDPKKPRGKMSSYAFFVQTSREEHKKKHPDASVNFSEFSKKCSERWKTMSAKEKGKFEDMAKADKARYEREMKTYIPPKGEKKKKKKKKK";
-        String multiSeq2 = "MKKLKKHPDFPKKPLTPYFRFFMEKRAKYAKLHPEMSNLDLTKILSKKYKELPEKKKMKYIQDFQREKQEFERNLARFREDHPDLIQNAKK";
-        String multiSeq3 = "MQDRVKRPMNAFIVWSRDQRRKMALENPRMRNSEISKQLGYQWKMLTEAEKWPFFQEAQKLQAMHREKYPNYKYRPRRKAKMLPK";
-        String multiSeq4 = "MHIKKPLNAFMLYMKEMRANVVAESTLKESAAINQILGRRWHALSREEQAKYYELARKERQLHMQLYPGWSARDNYGKKKKRKREK";
+
+//        String multiSeq1 = "GKGDPKKPRGKMSSYAFFVQTSREEHKKKHPDASVNFSEFSKKCSERWKTMSAKEKGKFEDMAKADKARYEREMKTYIPPKGEKKKKKKKKK";
+//        String multiSeq2 = "MKKLKKHPDFPKKPLTPYFRFFMEKRAKYAKLHPEMSNLDLTKILSKKYKELPEKKKMKYIQDFQREKQEFERNLARFREDHPDLIQNAKK";
+//        String multiSeq3 = "MQDRVKRPMNAFIVWSRDQRRKMALENPRMRNSEISKQLGYQWKMLTEAEKWPFFQEAQKLQAMHREKYPNYKYRPRRKAKMLPK";
+//        String multiSeq4 = "MHIKKPLNAFMLYMKEMRANVVAESTLKESAAINQILGRRWHALSREEQAKYYELARKERQLHMQLYPGWSARDNYGKKKKRKREK";
 
 
 
@@ -86,9 +91,9 @@ public class RunAlignments {
 
 
         // Run multiple sequence alignments
-//        runBioJavaMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
-//        runMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
-//        runViterbiMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta);
+        runBioJavaMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
+        runMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
+        runViterbiMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta);
         runMEAMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta);
 
         // Run Baum Welch test
@@ -340,24 +345,23 @@ public class RunAlignments {
         System.out.println("\nFirst alignment:");
         ProfilePairHMM firstAlignment = new ProfilePairHMM(first, second, tau, epsilon, delta);
         HashProfile firstProfile = firstAlignment.getMEAAlignment();
-//        System.out.println(firstProfile);
+        System.out.println(firstProfile);
 
         System.out.println("\nSecond alignment:");
 
 
         ProfilePairHMM secondAlignment = new ProfilePairHMM(firstProfile, third, tau, epsilon, delta);
         HashProfile secondProfile = secondAlignment.getMEAAlignment();
-//        System.out.println(secondProfile);
+        System.out.println(secondProfile);
 
 
         System.out.println("\nThird alignment:");
 
         ProfilePairHMM thirdAlignment = new ProfilePairHMM(secondProfile, fourth, tau, epsilon, delta);
         HashProfile thirdProfile = thirdAlignment.getMEAAlignment();
-//        System.out.println(thirdProfile);
+        System.out.println(thirdProfile);
 
 
 
-//        System.out.println("Not being called correctly!");
     }
 }
