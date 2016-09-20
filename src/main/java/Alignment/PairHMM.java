@@ -1,10 +1,14 @@
 package Alignment;
 
+import Alignment.Alignment;
 import SubstitutionModels.ExampleModel;
+import org.forester.archaeopteryx.ArchaeopteryxA;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by gabe on 3/05/2016.
@@ -56,8 +60,8 @@ public class PairHMM {
 
         vM[0][0] = 1;
 
-        double[][] mat1 = new double[2][2];
-        double[][] mat2 = new double[2][2];
+//        double[][] mat1 = new double[2][2];
+//        double[][] mat2 = new double[2][2];
 
 
 
@@ -80,20 +84,20 @@ public class PairHMM {
 //            this.shorterSeq = seq1;
 //        }
 
-        for (int i = 1; i <= seq1.length() ; i++) {
-            for (int j = 1; j <= seq2.length(); j ++) {
-                fillVM(i, j, vM, vX, vY, tracebackM);
-                fillVX(i, j, vM, vX, tracebackX);
-                fillVY(i, j, vM, vY, tracebackY);
-            }
-
-        }
-
-//        printMatrix(tracebackM);
-//        printMatrix(tracebackX);
-//        printMatrix(tracebackY);
-
-        traceback();
+//        for (int i = 1; i <= seq1.length() ; i++) {
+//            for (int j = 1; j <= seq2.length(); j ++) {
+//                fillVM(i, j, vM, vX, vY, tracebackM);
+//                fillVX(i, j, vM, vX, tracebackX);
+//                fillVY(i, j, vM, vY, tracebackY);
+//            }
+//
+//        }
+//
+////        printMatrix(tracebackM);
+////        printMatrix(tracebackX);
+////        printMatrix(tracebackY);
+//
+//        traceback();
 
     }
 
@@ -188,12 +192,15 @@ public class PairHMM {
 
     }
 
-    public void traceback(){
+    public List<String> traceback(){
 
 //        printAllMatrices();
 
         String seq1Output = "";
         String seq2Output = "";
+        List<String> output = new ArrayList<String>();
+
+
         String lastState;
         int i = seq1.length();
         int j = seq2.length();
@@ -255,10 +262,13 @@ public class PairHMM {
             n++;
 //            System.out.println(n);
 
+//            HashProfile tracebackAlignment = new  HashProfile(seq1Output, seq2Output);
 
-            System.out.println(seq1Output);
-            System.out.println(seq2Output);
+            //TODO: Remove this arraylist and return PairHMM correctly as profile
+            output.add(seq1Output);
+            output.add(seq2Output);
         }
+        return output;
 
     }
 
@@ -380,7 +390,7 @@ public class PairHMM {
 
         double backwardProb = bM[1][1] + bX[1][1] + bY[1][1];
 
-        System.out.println("Backward probability is " + backwardProb);
+//        System.out.println("Backward probability is " + backwardProb);
 
         return bM;
 
@@ -474,15 +484,34 @@ public class PairHMM {
 //        }
     }
 
-    public void performMEA(){
+    public void getViterbiAlignmnet(){
+
+        for (int i = 1; i <= seq1.length() ; i++) {
+            for (int j = 1; j <= seq2.length(); j ++) {
+                fillVM(i, j, vM, vX, vY, tracebackM);
+                fillVX(i, j, vM, vX, tracebackX);
+                fillVY(i, j, vM, vY, tracebackY);
+            }
+
+        }
+
+
+        //TODO: Return alignment correctly
+        List<String> traceback = traceback();
+
+        for (String output : traceback){
+            System.out.println(output);
+        }
+
+    }
+
+    public Alignment getMEAAlignment(){
         double[][] fM = this.forwardAlgorithm();
         double[][] bM = this.backwardAlgorithm();
         double[][] pM = calcPosteriorMatrix(fM, bM);
 
-        SequenceAligner sequenceAligner = new SequenceAligner(seq1, seq2, 0, 0, pM, true);
-
-
-
+        Alignment alignment = new Alignment(seq1, seq2, 0, 0, pM, true);
+        return alignment;
     }
 
     public void printAllMatrices(){
@@ -546,11 +575,11 @@ public class PairHMM {
     }
 
     public static double[][] calcPosteriorMatrix(double[][] fM, double[][]bM){
-        System.out.println("Forward Matrix:");
-        printMatrix(fM);
-        System.out.println("Backward Matrix:");
-
-        printMatrix(bM);
+//        System.out.println("Forward Matrix:");
+//        printMatrix(fM);
+//        System.out.println("Backward Matrix:");
+//
+//        printMatrix(bM);
 
         double[][] pM = new double[fM.length][fM[0].length];
 
@@ -561,9 +590,9 @@ public class PairHMM {
 
 
             }
-        System.out.println("Posterior Matrix:");
-
-        printMatrix(pM);
+//        System.out.println("Posterior Matrix:");
+//
+//        printMatrix(pM);
 
         return pM;
 

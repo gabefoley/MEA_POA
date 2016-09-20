@@ -25,6 +25,8 @@ package SubstitutionModels;
  * V  0 -3 -3 -3 -1 -2 -2 -3 -3  3  1 -2  1 -1 -2 -2  0 -3 -1  4
  */
 
+
+
 final public class Blosum62 {
 
     /*

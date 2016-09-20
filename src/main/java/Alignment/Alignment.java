@@ -2,15 +2,14 @@ package Alignment;
 
 
 import SubstitutionModels.Blosum62;
+import SubstitutionModels.Blosum62Probs;
 
 import java.util.*;
 
 import static java.lang.Math.max;
 
-import SubstitutionModels.ExampleModel;
 
-
-public class SequenceAligner {
+public class Alignment {
 
     /**
      * Class for aligning a sequence to a PO Graph
@@ -27,32 +26,14 @@ public class SequenceAligner {
     private double[][] matrix;
     private boolean MEA;
     private int profileMatrixHeight;
+    private HashProfile updatedProfile;
 
-    //TODO: Remove String based method and only allow for profile based method
-    public SequenceAligner(String seq1, String seq2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
+    public Alignment(String seq1, String seq2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
 
-        HashProfile profile1 = new HashProfile(seq1);
-        HashProfile profile2 = new HashProfile(seq2);
-
-        SequenceAligner profileAlignment = new SequenceAligner(profile1, profile2, openGapPenalty, extendGapPenalty, matrix, MEA);
-//        this.seq1 = seq1;
-//        this.seq2 = seq2;
-//        this.openGapPenalty = openGapPenalty;
-//        this.extendGapPenalty = extendGapPenalty;
-//        this.stringIndexes = new ArrayList<Integer>();
-//        this.nodeIndexes = new ArrayList<Integer>();
-//        this.matrix = matrix;
-//        this.MEA = MEA;
-//        List<List<Integer>> matches = this.alignSeqToGraph();
-//        this.stringIndexes = matches.get(0);
-//        this.nodeIndexes = matches.get(1);
-
-
-
-
+        this(new HashProfile(seq1), new HashProfile(seq2), openGapPenalty, extendGapPenalty, matrix, MEA);
     }
 
-    public SequenceAligner(HashProfile profile1, HashProfile profile2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
+    public Alignment(HashProfile profile1, HashProfile profile2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
         this.profile1 = profile1;
         this.profile2 = profile2;
         this.openGapPenalty = openGapPenalty;
@@ -62,13 +43,14 @@ public class SequenceAligner {
         this.matrix = matrix;
         this.MEA = MEA;
 //        this.profileMatrixHeight = profile1.getProfileArray()[0].length;
-        List<List<Integer>> matches = this.alignProfileToProfile();
-        this.stringIndexes = matches.get(0);
-        this.nodeIndexes = matches.get(1);
+//        List<List<Integer>> matches = this.alignProfileToProfile();
+        this.updatedProfile = this.alignProfileToProfile();
 
     }
 
-
+    public HashProfile getUpdatedProfile(){
+        return this.updatedProfile;
+    }
     /**
      * Return the scores associated with matching a single character in a PO Graph to an
      * array of characters.
@@ -80,7 +62,7 @@ public class SequenceAligner {
     public double[] getMatchScore(char base, String seqvec) {
         double[] matches = new double[seqvec.length()];
         for (int i = 0; i < seqvec.length(); i++) {
-            double matchScore = Blosum62.getDistance(seqvec.charAt(i), base);
+            double matchScore = Blosum62Probs.getDistance(seqvec.charAt(i), base);
             matches[i] = matchScore;
         }
 
@@ -90,6 +72,17 @@ public class SequenceAligner {
     public double[] getMEAMatchScore(int i, String seqVec){
         double[] matches = new double[seqVec.length()];
         for (int j = 0; j < seqVec.length(); j++) {
+            double matchScore = matrix[i+1][j+1];
+            matches[j] = matchScore;
+
+        }
+
+        return matches;
+    }
+
+    public double[] getMEAMatchScore(int i, HashProfile profile){
+        double[] matches = new double[profile.getProfileArray().size()];
+        for (int j = 0; j < profile.getProfileArray().size(); j++) {
             double matchScore = matrix[i+1][j+1];
             matches[j] = matchScore;
 
@@ -110,6 +103,19 @@ public class SequenceAligner {
         for (int i = 0; i < profile2Length; i++) {
             double totalScore = 0;
             double totalCount = 0;
+            double profile1Count = 0;
+            double profile2Count = 0;
+
+            for (Character residue : profile1.getProfileArray().get(index).keySet()){
+                profile1Count += profile1.getProfileArray().get(index).get(residue).getValue();
+            }
+
+            for (Character residue : profile2.getProfileArray().get(i).keySet()){
+                profile2Count += profile2.getProfileArray().get(i).get(residue).getValue();
+            }
+
+            totalCount = profile1Count * profile2Count;
+
             for (Character name : profile1.getProfileArray().get(index).keySet()) {
                 if (name != '-') {
                     Character profile1Name = name;
@@ -121,7 +127,7 @@ public class SequenceAligner {
                             int profile2Value = profile2.getProfileArray().get(i).get(name2).getValue();
 //                            System.out.println(profile1Value);
 //                            System.out.println(profile2Value);
-                            double matchScore = ExampleModel.getDistance(profile1Name, profile2Name);
+                            double matchScore = Blosum62Probs.getDistance(profile1Name, profile2Name);
                             totalScore += profile1Value * profile2Value * matchScore;
                             matches[i] = totalScore / totalCount;
 
@@ -249,7 +255,8 @@ public class SequenceAligner {
      * @return
      */
 
-    public List<List<Integer>> backtrack(double[][] scores, int[][] backStrIdx, int[][] backGrphIdx) {
+//    public List<List<Integer>> backtrack(double[][] scores, int[][] backStrIdx, int[][] backGrphIdx) {
+    public HashProfile backtrack(double[][] scores, int[][] backStrIdx, int[][] backGrphIdx) {
 
 
         //TODO: Scores only recording one optimal path - see simpleProfile vs simplerProfile 19/08/2016
@@ -306,14 +313,14 @@ public class SequenceAligner {
         }
 
         // Fill out the remaining indexes of each profile
-        while (matches.get(0) > 0){
+        while (matches.get(0) > 0 && curnodeIdx > 0){
             matches.add(0, curnodeIdx - 1);
             strIndexes.add(0, -1);
             curnodeIdx -= 1;
 
         }
 
-        while (strIndexes.get(0) > 0) {
+        while (strIndexes.get(0) > 0 && curstrIdx > 0) {
             strIndexes.add(0, curstrIdx - 1);
             matches.add(0, -1);
             curstrIdx -= 1;
@@ -332,8 +339,8 @@ public class SequenceAligner {
 
 
         for (int i = 0; i < matches.size(); i++){
-            if (matches.get(i) == -1){
-
+            if (matches.get(i) == -1) {
+                gapPos.add(i);
             }
         }
 
@@ -362,7 +369,7 @@ public class SequenceAligner {
 //        }
 
         HashProfile updatedProfile = new HashProfile(profile1, profile2);
-        System.out.println(updatedProfile.toString());
+//        System.out.println(updatedProfile.toString());
 //        System.out.println("strIndex " + strIndexes);
 //        System.out.println("matchs " + matchesIndex);
 
@@ -391,7 +398,8 @@ public class SequenceAligner {
 //        System.out.println(seq2output);
 
 
-        return matchesIndex;
+        return updatedProfile;
+//        return matchesIndex;
     }
 
     /**
@@ -400,10 +408,12 @@ public class SequenceAligner {
      */
 
 
-    public List<List<Integer>> alignSeqToGraph() {
+    public HashProfile alignSeqToGraph() {
+//        public List<List<Integer>> alignSeqToGraph() {
 
 
-        int l1 = this.seq1.length();
+
+            int l1 = this.seq1.length();
         int l2 = this.seq2.length();
 
 
@@ -546,7 +556,7 @@ public class SequenceAligner {
             }
         }
 //        System.out.println("Scores matrix is ");
-//        PairHMM.printMatrix(scores);
+//        PairwisePairHMM.printMatrix(scores);
 
         return backtrack(scores, backStrIdx, backGraphIdx);
 
@@ -558,7 +568,8 @@ public class SequenceAligner {
      */
 
 
-    public List<List<Integer>> alignProfileToProfile() {
+    public HashProfile alignProfileToProfile() {
+//        public List<List<Integer>> alignProfileToProfile() {
 
         int profile1Length = this.profile1.getProfileArray().size();
         int profile2Length = this.profile2.getProfileArray().size();
@@ -566,7 +577,7 @@ public class SequenceAligner {
         int l1 = profile1Length;
         int l2 = profile2Length;
 
-
+        //TODO: Fix up how initialisedData is returned
         List<Object> initialisedData = this.initialiseDyncamicProgrammingData(l1, l2);
 
         double[][] scores = (double[][]) initialisedData.get(2);
@@ -593,8 +604,19 @@ public class SequenceAligner {
 
 //            profile1.getProfileMatrix()[][i];
 
-            double[] matchPoints = this.getProfileMatchScore(profile1, profile2, i);
 
+
+            double[] matchPoints;
+
+            if (MEA){
+                matchPoints = this.getMEAMatchScore(i, profile2);
+            }
+
+            else {
+
+                matchPoints = this.getProfileMatchScore(profile1, profile2, i);
+
+            }
 
 
 
@@ -713,7 +735,7 @@ public class SequenceAligner {
             }
         }
 //        System.out.println("Scores matrix is ");
-//        PairHMM.printMatrix(scores);
+//        PairwisePairHMM.printMatrix(scores);
 
         return backtrack(scores, backStrIdx, backGraphIdx);
 

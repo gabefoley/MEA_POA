@@ -49,15 +49,15 @@ public class MSA_NW {
 //        }
     }
 
-    private static void multipleSequenceAlignment(String[] ids) throws Exception {
-        List<ProteinSequence> lst = new ArrayList<ProteinSequence>();
-        for (String id : ids) {
-            lst.add(getSequenceForId(id));
-        }
-        Profile<ProteinSequence, AminoAcidCompound> profile = Alignments.getMultipleSequenceAlignment(lst);
-        System.out.printf("Clustalw:%n%s%n", profile);
-        ConcurrencyTools.shutdown();
-    }
+//    private static void multipleSequenceAlignment(String[] ids) throws Exception {
+//        List<ProteinSequence> lst = new ArrayList<ProteinSequence>();
+//        for (String id : ids) {
+//            lst.add(getSequenceForId(id));
+//        }
+//        Profile<ProteinSequence, AminoAcidCompound> profile = Alignments.getMultipleSequenceAlignment(lst);
+//        System.out.printf("Clustalw:%n%s%n", profile);
+//        ConcurrencyTools.shutdown();
+//    }
 
     private static ProteinSequence getSequenceForId(String uniProtId) throws Exception {
         URL uniprotFasta = new URL(String.format("http://www.uniprot.org/uniprot/%s.fasta", uniProtId));

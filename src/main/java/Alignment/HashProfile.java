@@ -48,6 +48,7 @@ public class HashProfile {
     }
 
     public HashProfile(HashProfile profile1, HashProfile profile2){
+        List<Map<Character,MutableInt>> newprofileArray = profile1.getProfileArray();
         this.profileArray = profile1.getProfileArray();
         this.sequences = profile1.getSequences();
         for (String seq: profile2.getSequences()){
@@ -84,7 +85,7 @@ public class HashProfile {
 
 
         for (int i = 0; i < seq.length(); i++) {
-            if (!(seq.charAt(i) == ('-'))) {
+//            if (!(seq.charAt(i) == ('-'))) {
                 MutableInt count = profileArray.get(i).get(seq.charAt(i));
 
                 if (count == null) {
@@ -94,14 +95,14 @@ public class HashProfile {
                     count.increment();
                 }
             }
-        }
+//        }
 
     }
 
     public void fillProfileArray(HashProfile profile){
         for (int i = 0; i < profile.profileArray.size(); i++) {
             for (Character residue : profile.getProfileArray().get(i).keySet()) {
-                if (!residue.equals("-")) {
+//                if (!residue.equals("-")) {
                     MutableInt count = profileArray.get(i).get(residue);
                     if (count == null) {
                         profileArray.get(i).put(residue, new MutableInt());
@@ -111,11 +112,14 @@ public class HashProfile {
                     }
                 }
             }
-        }
+//        }
 
     }
 
     public void addGaps(List<Integer> gapPos){
+
+        //TODO: Don't remove and recreate profileArray everytime we add gaps
+        this.profileArray = new ArrayList<Map<Character,MutableInt>>();
 
         for (int i = 0; i < this.getSequences().size(); i++){
             String seq = this.getSequences().get(i);
@@ -124,19 +128,20 @@ public class HashProfile {
             }
 
             this.sequences.set(i, seq);
+
+
         }
 
+        // Create a new profileArray the size of the first sequence
+        for (int j = 0; j < this.getSequences().get(0).length(); j++) {
+            profileArray.add(j, new HashMap<Character, MutableInt>());
+        }
 
-
-//        for (String seq : this.getSequences()) {
-//            int index = this.getSequences().indexOf(seq);
-//            for (int pos : gapPos){
-//                seq = seq.substring(0, pos) + "-" + seq.substring(pos);
-//            }
-//            this.sequences.remove(index);
-//            this.sequences.add(seq);
-//
-//        }
+        // Fill in the profileArray with all the information from the seqs
+        for (int i = 0; i < this.getSequences().size(); i++) {
+            String seq = this.getSequences().get(i);
+            this.fillProfileArray(seq);
+        }
 
     }
 
@@ -145,11 +150,21 @@ public class HashProfile {
 
 
     public List<Map<Character,MutableInt>> getProfileArray(){
-        return this.profileArray;
+        return profileArray;
     }
 
     public List<String> getSequences(){
         return this.sequences;
+    }
+
+    public String getColumn(int pos){
+        String columnList = "";
+        for (String seq: this.getSequences()){
+            columnList += seq.charAt(pos);
+
+        }
+
+        return columnList;
     }
 
 
