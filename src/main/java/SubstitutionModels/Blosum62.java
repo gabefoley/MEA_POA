@@ -90,7 +90,7 @@ final public class Blosum62 {
     public static double getDistance(char a1, char a2) {
 
         if (getIndex(a1) == -1 || getIndex(a2) == -1){
-            System.out.println("that shouldn't be");
+            System.out.println("Unrecognised character");
 
         }
         return matrix[getIndex(a1)][getIndex(a2)];

@@ -26,15 +26,15 @@ public class RunAlignments {
 
 
         // Setup pairwise inputs
-//        String pairwiseQuery = "AACT";
-//        String pairwiseTarget = "CT";
+        String pairwiseQuery = "AACT";
+        String pairwiseTarget = "CT";
 
 
 //        String pairwiseQuery = "PPGKRNDTG";
 //        String pairwiseTarget = "PPGNDTT";
 
-        String pairwiseQuery = "AAGPWRDDFP";
-        String pairwiseTarget = "AARDFT";
+//        String pairwiseQuery = "AAGPWRDDFP";
+//        String pairwiseTarget = "AARDFT";
 
 
         int gapOpen = 2;
@@ -83,18 +83,16 @@ public class RunAlignments {
 
         // Run pairwise alignments
 //        runBioJavaPairwise(pairwiseQuery, pairwiseTarget, gapOpen, gapExtend);
-//        runPairwise(pairwiseQuery, pairwiseTarget, gapOpen, gapExtend);
-//        runViterbiPairwise(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
+        runPairwise(pairwiseQuery, pairwiseTarget, gapOpen, gapExtend);
 //        runViterbiPairwiseOnProfile(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
-//        runMEAPairwise(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
 //        runMEAPairwiseOnProfile(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
 
 
         // Run multiple sequence alignments
-        runBioJavaMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
-        runMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
-        runViterbiMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta);
-        runMEAMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta);
+//        runBioJavaMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
+//        runMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
+//        runViterbiMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta);
+//        runMEAMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta);
 
         // Run Baum Welch test
 
@@ -121,8 +119,8 @@ public class RunAlignments {
                 {.2, .8 },
                 {.9, .1},
         };
-//        BaumWelch bw = new BaumWelch(seqArray, start, transition, emission);
-//        System.out.println(bw);
+        BaumWelch bw = new BaumWelch(seqArray, start, transition, emission);
+        System.out.println(bw);
 
 
     }
@@ -166,37 +164,18 @@ public class RunAlignments {
 
     }
 
-    private static void runViterbiPairwise(String pairwiseQuery, String pairwiseTarget, double tau, double epsilon,
-                                           double delta){
-        System.out.println("--------------------------");
-        System.out.println("\nViterbi Pairwise: ");
 
-        PairHMM pairHMM = new PairHMM(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
-        pairHMM.getViterbiAlignmnet();
-
-
-    }
-
-    private static void runMEAPairwise(String pairwiseQuery, String pairwiseTarget, double tau, double epsilon,
-                                       double delta ){
-        System.out.println("--------------------------");
-        System.out.println("\nMaximum Expected Accuracy Alignment: ");
-
-        PairHMM pairHMM = new PairHMM(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
-        Alignment meaAlignment = pairHMM.getMEAAlignment();
-
-    }
 
     private static void runViterbiPairwiseOnProfile(String pairwiseQuery, String pairwiseTarget, double tau, double epsilon,
                                            double delta){
         System.out.println("--------------------------");
-        System.out.println("\nViterbi Pairwise using ProfilePairHMM: ");
+        System.out.println("\nViterbi Pairwise using PairHMM: ");
 
         //TODO: Handle this in the constructor
         HashProfile profile1 = new HashProfile(pairwiseQuery);
         HashProfile profile2 = new HashProfile(pairwiseTarget);
 
-        ProfilePairHMM pairHMM = new ProfilePairHMM(profile1, profile2, tau, epsilon, delta);
+        PairHMM pairHMM = new PairHMM(profile1, profile2, tau, epsilon, delta);
         HashProfile alignment = pairHMM.getViterbiAlignmnet();
         System.out.println(alignment);
 
@@ -205,13 +184,13 @@ public class RunAlignments {
     private static void runMEAPairwiseOnProfile(String pairwiseQuery, String pairwiseTarget, double tau, double epsilon,
                                        double delta ){
         System.out.println("--------------------------");
-        System.out.println("\nMaximum Expected Accuracy Alignment using ProfilePairHMM: ");
+        System.out.println("\nMaximum Expected Accuracy Alignment using PairHMM: ");
 
         //TODO: Handle this in the constructor
         HashProfile profile1 = new HashProfile(pairwiseQuery);
         HashProfile profile2 = new HashProfile(pairwiseTarget);
 
-        ProfilePairHMM pairHMM = new ProfilePairHMM(profile1, profile2, tau, epsilon, delta);
+        PairHMM pairHMM = new PairHMM(profile1, profile2, tau, epsilon, delta);
         HashProfile alignment = pairHMM.getMEAAlignment();
 
         System.out.println(alignment);
@@ -221,7 +200,7 @@ public class RunAlignments {
 //        System.out.println("Not being called correctly!");
 
 
-//        ProfilePairHMM pairHMM = new ProfilePairHMM(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
+//        PairHMM pairHMM = new PairHMM(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
 
     }
 
@@ -311,21 +290,21 @@ public class RunAlignments {
 
 
         System.out.println("\nFirst alignment:");
-        ProfilePairHMM firstAlignment = new ProfilePairHMM(first, second, tau, epsilon, delta);
+        PairHMM firstAlignment = new PairHMM(first, second, tau, epsilon, delta);
         HashProfile firstProfile = firstAlignment.getViterbiAlignmnet();
         System.out.println(firstProfile);
 
         System.out.println("\nSecond alignment:");
 
 
-        ProfilePairHMM secondAlignment = new ProfilePairHMM(firstProfile, third, tau, epsilon, delta);
+        PairHMM secondAlignment = new PairHMM(firstProfile, third, tau, epsilon, delta);
         HashProfile secondProfile = secondAlignment.getViterbiAlignmnet();
         System.out.println(secondProfile);
 
 
         System.out.println("\nThird alignment:");
 
-        ProfilePairHMM thirdAlignment = new ProfilePairHMM(secondProfile, fourth, tau, epsilon, delta);
+        PairHMM thirdAlignment = new PairHMM(secondProfile, fourth, tau, epsilon, delta);
         HashProfile thirdProfile = thirdAlignment.getViterbiAlignmnet();
         System.out.println(thirdProfile);
 
@@ -343,21 +322,21 @@ public class RunAlignments {
         HashProfile fourth = new HashProfile(multiSeq4);
 
         System.out.println("\nFirst alignment:");
-        ProfilePairHMM firstAlignment = new ProfilePairHMM(first, second, tau, epsilon, delta);
+        PairHMM firstAlignment = new PairHMM(first, second, tau, epsilon, delta);
         HashProfile firstProfile = firstAlignment.getMEAAlignment();
         System.out.println(firstProfile);
 
         System.out.println("\nSecond alignment:");
 
 
-        ProfilePairHMM secondAlignment = new ProfilePairHMM(firstProfile, third, tau, epsilon, delta);
+        PairHMM secondAlignment = new PairHMM(firstProfile, third, tau, epsilon, delta);
         HashProfile secondProfile = secondAlignment.getMEAAlignment();
         System.out.println(secondProfile);
 
 
         System.out.println("\nThird alignment:");
 
-        ProfilePairHMM thirdAlignment = new ProfilePairHMM(secondProfile, fourth, tau, epsilon, delta);
+        PairHMM thirdAlignment = new PairHMM(secondProfile, fourth, tau, epsilon, delta);
         HashProfile thirdProfile = thirdAlignment.getMEAAlignment();
         System.out.println(thirdProfile);
 

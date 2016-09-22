@@ -42,48 +42,48 @@ public class Alignment {
         this.nodeIndexes = new ArrayList<Integer>();
         this.matrix = matrix;
         this.MEA = MEA;
-//        this.profileMatrixHeight = profile1.getProfileArray()[0].length;
-//        List<List<Integer>> matches = this.alignProfileToProfile();
         this.updatedProfile = this.alignProfileToProfile();
 
     }
 
-    public HashProfile getUpdatedProfile(){
+    public HashProfile getUpdatedProfile() {
         return this.updatedProfile;
     }
-    /**
-     * Return the scores associated with matching a single character in a PO Graph to an
-     * array of characters.
-     * Used to get the scores for matching each row in the score matrix to each column
-     * @param base the character in the PO Graph to be matched against
-     * @param seqvec characters in the sequence to be matched against
-     * @return an int array containing the match scores
-     */
-    public double[] getMatchScore(char base, String seqvec) {
-        double[] matches = new double[seqvec.length()];
-        for (int i = 0; i < seqvec.length(); i++) {
-            double matchScore = Blosum62.getDistance(seqvec.charAt(i), base);
-            matches[i] = matchScore;
-        }
 
-        return matches;
-    }
+//    /**
+//     * Return the scores associated with matching a single character in a PO Graph to an
+//     * array of characters.
+//     * Used to get the scores for matching each row in the score matrix to each column
+//     *
+//     * @param base   the character in the PO Graph to be matched against
+//     * @param seqvec characters in the sequence to be matched against
+//     * @return an int array containing the match scores
+//     */
+//    public double[] getMatchScore(char base, String seqvec) {
+//        double[] matches = new double[seqvec.length()];
+//        for (int i = 0; i < seqvec.length(); i++) {
+//            double matchScore = Blosum62.getDistance(seqvec.charAt(i), base);
+//            matches[i] = matchScore;
+//        }
+//
+//        return matches;
+//    }
 
-    public double[] getMEAMatchScore(int i, String seqVec){
-        double[] matches = new double[seqVec.length()];
-        for (int j = 0; j < seqVec.length(); j++) {
-            double matchScore = matrix[i+1][j+1];
-            matches[j] = matchScore;
+//    public double[] getMEAMatchScore(int i, String seqVec) {
+//        double[] matches = new double[seqVec.length()];
+//        for (int j = 0; j < seqVec.length(); j++) {
+//            double matchScore = matrix[i + 1][j + 1];
+//            matches[j] = matchScore;
+//
+//        }
+//
+//        return matches;
+//    }
 
-        }
-
-        return matches;
-    }
-
-    public double[] getMEAMatchScore(int i, HashProfile profile){
+    public double[] getMEAMatchScore(int i, HashProfile profile) {
         double[] matches = new double[profile.getProfileArray().size()];
         for (int j = 0; j < profile.getProfileArray().size(); j++) {
-            double matchScore = matrix[i+1][j+1];
+            double matchScore = matrix[i + 1][j + 1];
             matches[j] = matchScore;
 
         }
@@ -91,10 +91,9 @@ public class Alignment {
         return matches;
     }
 
-    public double[] getProfileMatchScore(HashProfile profile1, HashProfile profile2, int index ){
-        //TODO: Create a get length from profile method
+    public double[] getProfileMatchScore(HashProfile profile1, HashProfile profile2, int index) {
 
-        int profile2Length = profile2.getProfileArray().size();
+        int profile2Length = profile2.getLength();
 
         double[] matches = new double[profile2Length];
 
@@ -106,11 +105,13 @@ public class Alignment {
             double profile1Count = 0;
             double profile2Count = 0;
 
-            for (Character residue : profile1.getProfileArray().get(index).keySet()){
+            // Get total count of residues at this position in first profile
+            for (Character residue : profile1.getProfileArray().get(index).keySet()) {
                 profile1Count += profile1.getProfileArray().get(index).get(residue).getValue();
             }
 
-            for (Character residue : profile2.getProfileArray().get(i).keySet()){
+            // Get total count of residues at this position in second profile
+            for (Character residue : profile2.getProfileArray().get(i).keySet()) {
                 profile2Count += profile2.getProfileArray().get(i).get(residue).getValue();
             }
 
@@ -119,26 +120,21 @@ public class Alignment {
             for (Character name : profile1.getProfileArray().get(index).keySet()) {
                 if (name != '-') {
                     Character profile1Name = name;
+
+                    // Get count for specific residue
                     int profile1Value = profile1.getProfileArray().get(index).get(name).getValue();
 
                     for (Character name2 : profile2.getProfileArray().get(i).keySet()) {
                         if (name2 != '-') {
                             Character profile2Name = name2;
                             int profile2Value = profile2.getProfileArray().get(i).get(name2).getValue();
-//                            System.out.println(profile1Value);
-//                            System.out.println(profile2Value);
 
-                            if (profile1Name == -1 || profile2Name == -1){
-                                System.out.println("UMMM");
-                            }
 
+                            // Get the score of matching these residues
                             double matchScore = Blosum62.getDistance(profile1Name, profile2Name);
                             totalScore += profile1Value * profile2Value * matchScore;
                             matches[i] = totalScore / totalCount;
 
-//                            System.out.println("Postion: " + i);
-//                            System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
-//                            System.out.println("Profile 2 residue: " + profile2Name + " and count: " + profile2Value);
                         }
                     }
                 }
@@ -146,15 +142,13 @@ public class Alignment {
             }
         }
 
-//        System.out.println("------------");
-
-//        System.out.println(matches);
         return matches;
     }
 
 
     /**
      * Get characters in the sequence
+     *
      * @return sequence string
      */
     public String getSequence() {
@@ -163,6 +157,7 @@ public class Alignment {
 
     /**
      * Get list of Node IDs representing current sequence after alignment, null for gaps in sequence
+     *
      * @return list of Node IDS
      */
     public List<Integer> getStringIndexes() {
@@ -172,6 +167,7 @@ public class Alignment {
 
     /**
      * Get list of Node IDs that new sequence is being matched to, null for no match
+     *
      * @return list of Node IDS
      */
     public List<Integer> getNodeIndexes() {
@@ -211,6 +207,7 @@ public class Alignment {
      * Set up the initial sizes and values for the scores matrix, the matrices to
      * record the optimal moves through the score matrix, and the two mappings from
      * node ID to index and index to node ID
+     *
      * @return Object containing scores matrix, backSeq matrix, backGraph matrix, nodeID to
      * index, and index to node ID
      */
@@ -226,40 +223,40 @@ public class Alignment {
 //        }
 
         // Create score matrix
-        double[][] scores = new double[l1+1][l2+1];
+        double[][] scores = new double[l1 + 1][l2 + 1];
 
         // Fill top row with gap penalties
         for (int i = 0; i < l2; i++) {
-            scores[0][i+1] = openGapPenalty + (i * extendGapPenalty);
+            scores[0][i + 1] = openGapPenalty + (i * extendGapPenalty);
         }
 
 
         for (int i = 0; i < l1; ++i) {
-            scores[i+1][0] = openGapPenalty + (i * extendGapPenalty);
+            scores[i + 1][0] = openGapPenalty + (i * extendGapPenalty);
         }
 
-        int[][] backStrIdx = new int[l1 + 1][l2 + 1];
+        // Array to hold the optimal i index positions
+        int[][] iBackIndexes = new int[l1 + 1][l2 + 1];
 
-        for (int i = 0; i <l2; i++){
-            backStrIdx[0][i+1] = i;
+        //Fill first row with optimal previous cell move
+        for (int i = 0; i < l1; i++) {
+            iBackIndexes[i + 1][0] = i;
         }
 
-        int[][] backGraphIdx = new int[l1 + 1][l2 + 1];
+        // Array to hold the optimal j index positions
+        int[][] jBackIndexes = new int[l1 + 1][l2 + 1];
 
-        for (int i = 0; i <l1; i++){
-            backGraphIdx[i + 1][0] = i;
+        // Fill first column with optimal previous cell move
+        for (int i = 0; i < l2; i++) {
+            jBackIndexes[0][i + 1] = i;
         }
-
-
-
-
 
         List<Object> initialisedData = new ArrayList<Object>();
         initialisedData.add(nodeIDToIndex);
         initialisedData.add(nodeIndexToID);
         initialisedData.add(scores);
-        initialisedData.add(backStrIdx);
-        initialisedData.add(backGraphIdx);
+        initialisedData.add(jBackIndexes);
+        initialisedData.add(iBackIndexes);
 
         return initialisedData;
 
@@ -267,22 +264,21 @@ public class Alignment {
 
     /**
      * Trace back through the scores matrix, building the optimal alignment
+     *
      * @param scores
-     * @param backStrIdx
-     * @param backGrphIdx
+     * @param jBackIndexes
+     * @param iBackIndexes
      * @return
      */
 
-//    public List<List<Integer>> backtrack(double[][] scores, int[][] backStrIdx, int[][] backGrphIdx) {
-    public HashProfile backtrack(double[][] scores, int[][] backStrIdx, int[][] backGrphIdx) {
+    public HashProfile backtrack(double[][] scores, int[][] jBackIndexes, int[][] iBackIndexes) {
 
 
         //TODO: Scores only recording one optimal path - see simpleProfile vs simplerProfile 19/08/2016
 
         int besti = scores.length;
         int bestj = scores[0].length;
-        String seq1output = "";
-        String seq2output = "";
+
         besti -= 1;
         bestj -= 1;
         List<Integer> terminalIndices = new ArrayList<Integer>();
@@ -298,34 +294,39 @@ public class Alignment {
             }
         }
 
-        List<Integer> matches = new ArrayList<Integer>();
-        List<Integer> strIndexes = new ArrayList<Integer>();
+        List<Integer> profile1Indexes = new ArrayList<Integer>();
+        List<Integer> profile2Indexes = new ArrayList<Integer>();
 
-        int curstrIdx = 0;
-        int curnodeIdx = 0;
+        int profile2Index = 0;
+        int profile1Index = 0;
 
 
         while (!(besti == 0 && bestj == 0)) {
             // Get the i and j coordinates of the cell to move to
-            int nexti = backGrphIdx[besti][bestj];
-            int nextj = backStrIdx[besti][bestj];
+            int nexti = iBackIndexes[besti][bestj];
+            int nextj = jBackIndexes[besti][bestj];
 
-            curstrIdx = bestj - 1;
+            profile2Index = bestj - 1;
 
 //            besti = (besti == 0) ? 1 : besti;
-            curnodeIdx = besti - 1;
+            profile1Index = besti - 1;
 
+            // If the j index to backtrack to is not the same as current j index, there can't be a gap in second profile
             if (nextj != bestj) {
-                strIndexes.add(0, curstrIdx);
+                profile2Indexes.add(0, profile2Index);
+
+                // Else, there must be a gap in second profile at this position
             } else {
-                strIndexes.add(0, -1);
+                profile2Indexes.add(0, -1);
 
             }
+            // If the i index to backtrack to is not the same as current i index, there can't be a gap in first profile
             if (nexti != besti) {
-                matches.add(0, curnodeIdx);
+                profile1Indexes.add(0, profile1Index);
 
+                // Else, there must be a gap in first profile at this position
             } else {
-                matches.add(0, -1);
+                profile1Indexes.add(0, -1);
             }
 
             besti = nexti;
@@ -333,45 +334,41 @@ public class Alignment {
         }
 
         // Fill out the remaining indexes of each profile
-        while (matches.get(0) > 0 && curnodeIdx > 0){
-            matches.add(0, curnodeIdx - 1);
-            strIndexes.add(0, -1);
-            curnodeIdx -= 1;
+        while (profile1Indexes.get(0) > 0 && profile1Index > 0) {
+            profile1Indexes.add(0, profile1Index - 1);
+            profile2Indexes.add(0, -1);
+            profile1Index -= 1;
 
         }
 
-        while (strIndexes.get(0) > 0 && curstrIdx > 0) {
-            strIndexes.add(0, curstrIdx - 1);
-            matches.add(0, -1);
-            curstrIdx -= 1;
+        while (profile2Indexes.get(0) > 0 && profile2Index > 0) {
+            profile2Indexes.add(0, profile2Index - 1);
+            profile1Indexes.add(0, -1);
+            profile2Index -= 1;
 
         }
-
-
-        List<List<Integer>> matchesIndex = new ArrayList<List<Integer>>();
-
-        matchesIndex.add(matches);
-        matchesIndex.add(strIndexes);
 
         //TODO: Make calling gaps a function
+
+        // Create list of positions with gaps in them
         List<Integer> gapPos = new ArrayList<Integer>();
         List<Integer> gapPos2 = new ArrayList<Integer>();
 
-
-        for (int i = 0; i < matches.size(); i++){
-            if (matches.get(i) == -1) {
+        for (int i = 0; i < profile1Indexes.size(); i++) {
+            if (profile1Indexes.get(i) == -1) {
                 gapPos.add(i);
             }
         }
 
-        for (int i = 0; i < strIndexes.size(); i++){
-            if (strIndexes.get(i) == -1){
+        for (int i = 0; i < profile2Indexes.size(); i++) {
+            if (profile2Indexes.get(i) == -1) {
                 gapPos2.add(i);
             }
 
         }
 
-        if (gapPos.size() > 0){
+        // Update each profile to have gaps in them
+        if (gapPos.size() > 0) {
             profile1.addGaps(gapPos);
 
         }
@@ -381,228 +378,189 @@ public class Alignment {
         }
 
 
-//        for (Integer index: matchesIndex.get(1)){
-//            if (index == null){
-//                profile1.addGaps(index);
-//            }
-//
-//        }
-
+        // Create new profile alignment by joining two updated profiles together
         HashProfile updatedProfile = new HashProfile(profile1, profile2);
-//        System.out.println(updatedProfile.toString());
-//        System.out.println("strIndex " + strIndexes);
-//        System.out.println("matchs " + matchesIndex);
-
-//        for (Integer pos: matchesIndex.get(1)){
-//            if (pos == null){
-//                seq1output += "-";
-//            }
-//            else{
-//                seq1output += seq1.charAt(pos);
-//
-//            }
-//
-//
-//            }
-//
-//        for (Integer pos: matchesIndex.get(0)) {
-//            if (pos == null) {
-//                seq2output += "-";
-//            } else {
-//                seq2output += seq2.charAt(pos);
-//
-//            }
-//        }
-
-//        System.out.println(seq1output);
-//        System.out.println(seq2output);
 
 
         return updatedProfile;
-//        return matchesIndex;
+
     }
 
-    /**
-     * Align a new sequence to the PO Graph
-     * @return
-     */
-
-
-    public HashProfile alignSeqToGraph() {
-//        public List<List<Integer>> alignSeqToGraph() {
-
-
-
-            int l1 = this.seq1.length();
-        int l2 = this.seq2.length();
-
-
-        List<Object> initialisedData = this.initialiseDyncamicProgrammingData(l1, l2);
-
-        double[][] scores = (double[][]) initialisedData.get(2);
-        int[][] backStrIdx = (int[][]) initialisedData.get(3);
-        int[][] backGraphIdx = (int[][]) initialisedData.get(4);
-        double[][] insertCost = new double[l1 + 1][l2 + 1];
-        double[][] deleteCost = new double[l1 + 1][l2 + 1];
-
-        for (double[] row : insertCost)
-            Arrays.fill(row, this.openGapPenalty);
-
-        for (double[] row : deleteCost)
-            Arrays.fill(row, this.openGapPenalty);
-
-
-        // Array to keep track of whether we should insert
-        boolean[] inserted = new boolean[l2 + 1];
-        Arrays.fill(inserted, false);
-
-
-        double[] insscores = new double[l2 + 2];
-
-        for (int i = 0; i < this.seq1.length(); i++) {
-
-            // Get character of node
-            char pbase = seq1.charAt(i);
-
-            // Get predecessors of node
-//            List<Integer> predecessors = this.getPrevIndices(this.graph.getNodeDict().get(this.graph.getNodeIDList().get(i)), nodeIDToIndex);
-
-
-            // Get array of scores for matching current node with each position in sequence
-            double[] matchPoints = new double[seq2.length()];
-
-            if (MEA){
-                matchPoints = this.getMEAMatchScore(i, seq2);
-            }
-
-            else {
-
-                matchPoints = this.getMatchScore(pbase, seq2);
-
-            }
-
-            // Get array of scores equal to previous row + the cost of a deletion at each position
-            double[] deleteScore = Arrays.copyOfRange(scores[i], 1, scores[0].length);
-            deleteScore = addArrays(deleteScore, Arrays.copyOfRange(deleteCost[i], 1, deleteCost[0].length));
-
-
-            // Array to store the best possible score for deleting at each position
-            int[] bestDelete = new int[l2];
-
-            // Fill array with first predecessor position
-            Arrays.fill(bestDelete, i);
-
-
-
-            double[] matchScore = addArrays(Arrays.copyOfRange(scores[i], 0, scores[0].length - 1), matchPoints);
-            int[] bestMatch = new int[l2];
-            Arrays.fill(bestMatch, i);
-
-
-//            for (int j = 1; j < predecessors.size(); j++) {
-//                int predecessor = predecessors.get(j);
-//                double[] newDeleteScore = Arrays.copyOfRange(scores[predecessors.get(j) + 1], 1, scores[0].length);
+//    /**
+//     * Align a new sequence to the PO Graph
+//     *
+//     * @return
+//     */
 //
 //
-//                for (int k = 0; k < bestDelete.length; k++) {
-//                    int bestDeleteElement = newDeleteScore[k] > deleteScore[k] ? predecessor + 1 : bestDelete[k];
-//                    bestDelete[k] = bestDeleteElement;
-//
-//                    int bestDeleteScoreElement = max(newDeleteScore[k], deleteScore[k]);
-//                    deleteScore[k] = bestDeleteScoreElement;
-//                }
+//    public HashProfile alignSeqToGraph() {
 //
 //
-//                double[] newMatchScore = addArrays(Arrays.copyOfRange(scores[predecessors.get(j) + 1], 0, scores[0].length - 1), matchPoints);
+//        int l1 = this.seq1.length();
+//        int l2 = this.seq2.length();
 //
-//                for (int n = 0; n < bestMatch.length; n++) {
-//                    int bestMatchElement = newMatchScore[n] > matchScore[n] ? predecessor + 1 : bestMatch[n];
-//                    bestMatch[n] = bestMatchElement;
 //
-//                    int bestMatchScoreElement = max(newMatchScore[n], matchScore[n]);
-//                    matchScore[n] = bestMatchScoreElement;
+//        List<Object> initialisedData = this.initialiseDyncamicProgrammingData(l1, l2);
+//
+//        double[][] scores = (double[][]) initialisedData.get(2);
+//        int[][] backStrIdx = (int[][]) initialisedData.get(3);
+//        int[][] backGraphIdx = (int[][]) initialisedData.get(4);
+//        double[][] insertCost = new double[l1 + 1][l2 + 1];
+//        double[][] deleteCost = new double[l1 + 1][l2 + 1];
+//
+//        for (double[] row : insertCost)
+//            Arrays.fill(row, this.openGapPenalty);
+//
+//        for (double[] row : deleteCost)
+//            Arrays.fill(row, this.openGapPenalty);
+//
+//
+//        // Array to keep track of whether we should insert
+//        boolean[] inserted = new boolean[l2 + 1];
+//        Arrays.fill(inserted, false);
+//
+//
+//        double[] insscores = new double[l2 + 2];
+//
+//        for (int i = 0; i < this.seq1.length(); i++) {
+//
+//            // Get character of node
+//            char pbase = seq1.charAt(i);
+//
+//            // Get predecessors of node
+////            List<Integer> predecessors = this.getPrevIndices(this.graph.getNodeDict().get(this.graph.getNodeIDList().get(i)), nodeIDToIndex);
+//
+//
+//            // Get array of scores for matching current node with each position in sequence
+//            double[] matchPoints = new double[seq2.length()];
+//
+//            if (MEA) {
+//                matchPoints = this.getMEAMatchScore(i, seq2);
+//            } else {
+//
+//                matchPoints = this.getMatchScore(pbase, seq2);
+//
+//            }
+//
+//            // Get array of scores equal to previous row + the cost of a deletion at each position
+//            double[] deleteScore = Arrays.copyOfRange(scores[i], 1, scores[0].length);
+//            deleteScore = addArrays(deleteScore, Arrays.copyOfRange(deleteCost[i], 1, deleteCost[0].length));
+//
+//
+//            // Array to store the best possible score for deleting at each position
+//            int[] bestDelete = new int[l2];
+//
+//            // Fill array with first predecessor position
+//            Arrays.fill(bestDelete, i);
+//
+//
+//            double[] matchScore = addArrays(Arrays.copyOfRange(scores[i], 0, scores[0].length - 1), matchPoints);
+//            int[] bestMatch = new int[l2];
+//            Arrays.fill(bestMatch, i);
+//
+//
+////            for (int j = 1; j < predecessors.size(); j++) {
+////                int predecessor = predecessors.get(j);
+////                double[] newDeleteScore = Arrays.copyOfRange(scores[predecessors.get(j) + 1], 1, scores[0].length);
+////
+////
+////                for (int k = 0; k < bestDelete.length; k++) {
+////                    int bestDeleteElement = newDeleteScore[k] > deleteScore[k] ? predecessor + 1 : bestDelete[k];
+////                    bestDelete[k] = bestDeleteElement;
+////
+////                    int bestDeleteScoreElement = max(newDeleteScore[k], deleteScore[k]);
+////                    deleteScore[k] = bestDeleteScoreElement;
+////                }
+////
+////
+////                double[] newMatchScore = addArrays(Arrays.copyOfRange(scores[predecessors.get(j) + 1], 0, scores[0].length - 1), matchPoints);
+////
+////                for (int n = 0; n < bestMatch.length; n++) {
+////                    int bestMatchElement = newMatchScore[n] > matchScore[n] ? predecessor + 1 : bestMatch[n];
+////                    bestMatch[n] = bestMatchElement;
+////
+////                    int bestMatchScoreElement = max(newMatchScore[n], matchScore[n]);
+////                    matchScore[n] = bestMatchScoreElement;
+////                }
+////            }
+//
+//
+//            boolean[] deleted = new boolean[deleteScore.length];
+//
+//            for (int k = 0; k < deleteScore.length; k++) {
+//                deleted[k] = (deleteScore[k]) >= matchScore[k];
+//                scores[i + 1][k + 1] = max(deleteScore[k], matchScore[k]);
+//            }
+//
+//
+//            for (int l = 1; l < scores[0].length; l++) {
+//                scores[i + 1][l] = max(deleteScore[l - 1], matchScore[l - 1]);
+//
+//                if (deleted[l - 1]) {
+//                    backGraphIdx[i + 1][l] = bestDelete[l - 1];
+//                    backStrIdx[i + 1][l] = l;
+//                    deleteCost[i + 1][l] = extendGapPenalty;
+//
+//                } else {
+//                    backGraphIdx[i + 1][l] = bestMatch[l - 1];
+//                    backStrIdx[i + 1][l] = l - 1;
 //                }
 //            }
-
-
-            boolean[] deleted = new boolean[deleteScore.length];
-
-            for (int k = 0; k < deleteScore.length; k++) {
-                deleted[k] = (deleteScore[k]) >= matchScore[k];
-                scores[i + 1][k + 1] = max(deleteScore[k], matchScore[k]);
-            }
-
-
-            for (int l = 1; l < scores[0].length; l++) {
-                scores[i + 1][l] = max(deleteScore[l - 1], matchScore[l - 1]);
-
-                if (deleted[l - 1]) {
-                    backGraphIdx[i + 1][l] = bestDelete[l - 1];
-                    backStrIdx[i + 1][l] = l;
-                    deleteCost[i + 1][l] = extendGapPenalty;
-
-                } else {
-                    backGraphIdx[i + 1][l] = bestMatch[l - 1];
-                    backStrIdx[i + 1][l] = l - 1;
-                }
-            }
-
-            double[] scoreRow = scores[i + 1];
-            double[] insertRow = insertCost[i + 1];
-            int[] backStrRow = backStrIdx[i + 1];
-            Arrays.fill(inserted, false);
-            insscores = addArrays(scoreRow, insertRow);
-
-            for (int n = 0; n < l2; n++) {
-                if (insscores[n] >= scoreRow[n + 1]) {
-                    scores[i + 1][n + 1] = insscores[n];
-                    scoreRow[n + 1] = insscores[n];
-
-                    insertCost[i + 1][n + 1] = this.extendGapPenalty;
-                    insertRow[n + 1] = this.extendGapPenalty;
-                    backStrIdx[i + 1][n + 1] = n;
-                    backStrRow[n + 1] = n;
-                    inserted[n + 1] = true;
-                    insscores[n + 1] = scores[i + 1][n + 1] + insertCost[i + 1][n + 1];
-                }
-            }
-
-            for (int o = 0; o < inserted.length; o++) {
-                if (inserted[o]) {
-                    insertCost[i + 1][o] = this.extendGapPenalty;
-                    deleteCost[i + 1][o] = this.openGapPenalty;
-                    backGraphIdx[i + 1][o] = i + 1;
-                }
-            }
-        }
-//        System.out.println("Scores matrix is ");
-//        PairwisePairHMM.printMatrix(scores);
-
-        return backtrack(scores, backStrIdx, backGraphIdx);
-
-    }
+//
+//            double[] scoreRow = scores[i + 1];
+//            double[] insertRow = insertCost[i + 1];
+//            int[] backStrRow = backStrIdx[i + 1];
+//            Arrays.fill(inserted, false);
+//            insscores = addArrays(scoreRow, insertRow);
+//
+//            for (int n = 0; n < l2; n++) {
+//                if (insscores[n] >= scoreRow[n + 1]) {
+//                    scores[i + 1][n + 1] = insscores[n];
+//                    scoreRow[n + 1] = insscores[n];
+//
+//                    insertCost[i + 1][n + 1] = this.extendGapPenalty;
+//                    insertRow[n + 1] = this.extendGapPenalty;
+//                    backStrIdx[i + 1][n + 1] = n;
+//                    backStrRow[n + 1] = n;
+//                    inserted[n + 1] = true;
+//                    insscores[n + 1] = scores[i + 1][n + 1] + insertCost[i + 1][n + 1];
+//                }
+//            }
+//
+//            for (int o = 0; o < inserted.length; o++) {
+//                if (inserted[o]) {
+//                    insertCost[i + 1][o] = this.extendGapPenalty;
+//                    deleteCost[i + 1][o] = this.openGapPenalty;
+//                    backGraphIdx[i + 1][o] = i + 1;
+//                }
+//            }
+//        }
+////        System.out.println("Scores matrix is ");
+//
+//        return backtrack(scores, backStrIdx, backGraphIdx);
+//
+//    }
 
     /**
      * Align a new sequence to the PO Graph
+     *
      * @return
      */
 
 
     public HashProfile alignProfileToProfile() {
-//        public List<List<Integer>> alignProfileToProfile() {
 
-        int profile1Length = this.profile1.getProfileArray().size();
-        int profile2Length = this.profile2.getProfileArray().size();
-
-        int l1 = profile1Length;
-        int l2 = profile2Length;
+        int l1 = this.profile1.getProfileArray().size();
+        int l2 = this.profile2.getProfileArray().size();
 
         //TODO: Fix up how initialisedData is returned
         List<Object> initialisedData = this.initialiseDyncamicProgrammingData(l1, l2);
 
         double[][] scores = (double[][]) initialisedData.get(2);
-        int[][] backStrIdx = (int[][]) initialisedData.get(3);
-        int[][] backGraphIdx = (int[][]) initialisedData.get(4);
+        int[][] jBackIndexes = (int[][]) initialisedData.get(3);
+        int[][] iBackIndexes = (int[][]) initialisedData.get(4);
+
+        // Arrays to keep track of insert / deletion history and cost
         double[][] insertCost = new double[l1 + 1][l2 + 1];
         double[][] deleteCost = new double[l1 + 1][l2 + 1];
 
@@ -620,24 +578,24 @@ public class Alignment {
 
         double[] insscores = new double[l2 + 2];
 
-        for (int i = 0; i < profile1Length; i++) {
+        for (int i = 0; i < l1; i++) {
 
 //            profile1.getProfileMatrix()[][i];
 
 
-
             double[] matchPoints;
 
-            if (MEA){
+            // If we're performing Maximum Expected Accuracy, get the match score from the posterior probability matrix
+            if (MEA) {
                 matchPoints = this.getMEAMatchScore(i, profile2);
             }
 
+            // Otherwise get the match score from the chosen substitution matrix
             else {
 
                 matchPoints = this.getProfileMatchScore(profile1, profile2, i);
 
             }
-
 
 
             // Get character of node
@@ -660,7 +618,9 @@ public class Alignment {
 //
 //            }
 
-            // Get array of scores equal to previous row + the cost of a deletion at each position
+            // Check if there should be a deletion in the move to current row
+
+            // Get array of scores equal to previous row + the cost of moving to a deletion in current row
             double[] deleteScore = Arrays.copyOfRange(scores[i], 1, scores[0].length);
             deleteScore = addArrays(deleteScore, Arrays.copyOfRange(deleteCost[i], 1, deleteCost[0].length));
 
@@ -672,9 +632,13 @@ public class Alignment {
             Arrays.fill(bestDelete, i);
 
 
-
+            // Get array of scores equal to previous row + the cost of moving to a match in current row
             double[] matchScore = addArrays(Arrays.copyOfRange(scores[i], 0, scores[0].length - 1), matchPoints);
+
+            // Array to store the best possible score for matching at each position
             int[] bestMatch = new int[l2];
+
+            // Fill array with first predecessor position
             Arrays.fill(bestMatch, i);
 
 
@@ -704,8 +668,10 @@ public class Alignment {
 //            }
 
 
+            // Array to indicate whether we deleted at a position
             boolean[] deleted = new boolean[deleteScore.length];
 
+            // Update the deleted array and put the best score into scores
             for (int k = 0; k < deleteScore.length; k++) {
                 deleted[k] = (deleteScore[k]) >= matchScore[k];
                 scores[i + 1][k + 1] = max(deleteScore[k], matchScore[k]);
@@ -715,78 +681,98 @@ public class Alignment {
             for (int l = 1; l < scores[0].length; l++) {
                 scores[i + 1][l] = max(deleteScore[l - 1], matchScore[l - 1]);
 
+                /* If there was a deletion, update the backIndexes to reflect predecessor position it came from and
+                   update deleteCost array at this point to be an extension of a gap, not a gap opening
+                */
                 if (deleted[l - 1]) {
-                    backGraphIdx[i + 1][l] = bestDelete[l - 1];
-                    backStrIdx[i + 1][l] = l;
+                    iBackIndexes[i + 1][l] = bestDelete[l - 1];
+                    jBackIndexes[i + 1][l] = l;
                     deleteCost[i + 1][l] = extendGapPenalty;
 
+                    // Otherwise update the backindexes to reflect predecessor position the match came from
                 } else {
-                    backGraphIdx[i + 1][l] = bestMatch[l - 1];
-                    backStrIdx[i + 1][l] = l - 1;
+                    iBackIndexes[i + 1][l] = bestMatch[l - 1];
+                    jBackIndexes[i + 1][l] = l - 1;
                 }
             }
 
+            // Check if there should be an insertion in the current row
+
+            // Get current scores that reflect match / deletion scores
             double[] scoreRow = scores[i + 1];
+
+            // Get the current cost of insertion at current position
             double[] insertRow = insertCost[i + 1];
-            int[] backStrRow = backStrIdx[i + 1];
+
+            // Get the optimal predecessor j indexes
+            int[] jBackRow = jBackIndexes[i + 1];
             Arrays.fill(inserted, false);
+
+            // Get array of scores equal to match scores plus opening an insertion in current row
             insscores = addArrays(scoreRow, insertRow);
 
             for (int n = 0; n < l2; n++) {
+                /* If opening an insertion has equal or greater score than match or delete, update scores to reflect
+                   opening an insertion
+                  */
+
                 if (insscores[n] >= scoreRow[n + 1]) {
                     scores[i + 1][n + 1] = insscores[n];
                     scoreRow[n + 1] = insscores[n];
 
+                    // Also update the insertCost array at this point to be an extension of a gap, not a gap opening
                     insertCost[i + 1][n + 1] = this.extendGapPenalty;
                     insertRow[n + 1] = this.extendGapPenalty;
-                    backStrIdx[i + 1][n + 1] = n;
-                    backStrRow[n + 1] = n;
+
+                    //TODO: Think this is where the lack of optional pathways is bleeding from
+                    // Update the backindexes to reflect predecessor position the match came from
+                    jBackIndexes[i + 1][n + 1] = n;
+                    jBackRow[n + 1] = n;
                     inserted[n + 1] = true;
+
+                    // Update insertScores to be an extension of a gap, not a gap opening
                     insscores[n + 1] = scores[i + 1][n + 1] + insertCost[i + 1][n + 1];
                 }
             }
 
+            //TODO: Always favouring insertions over deletions!!
+            // Update the inserted and deleted costs to reflect the insertion and
             for (int o = 0; o < inserted.length; o++) {
                 if (inserted[o]) {
                     insertCost[i + 1][o] = this.extendGapPenalty;
                     deleteCost[i + 1][o] = this.openGapPenalty;
-                    backGraphIdx[i + 1][o] = i + 1;
+                    iBackIndexes[i + 1][o] = i + 1;
                 }
             }
         }
-//        System.out.println("Scores matrix is ");
-//        PairwisePairHMM.printMatrix(scores);
 
-        return backtrack(scores, backStrIdx, backGraphIdx);
+        return backtrack(scores, jBackIndexes, iBackIndexes);
 
     }
-
-
 
 
     /**
      * Method to add two arrays together by adding the contents of each respective index in each array together.
      * For example
      * [1,4,9,6] + [2,2,3] = [3,7,12,6]
-     * @param firstArray first array to add
+     *
+     * @param firstArray  first array to add
      * @param secondArray second array to add
      * @return int array with the add
-     *
-     *
      */
 
     //TODO: Move this helper method to the matrix helper methods
-    public static double[] addArrays ( double[] firstArray, double[] secondArray){
+    public static double[] addArrays(double[] firstArray, double[] secondArray) {
 
-        double[] shorterArray = (firstArray.length < secondArray.length ? firstArray: secondArray);
-        double[] longerArray = (firstArray.length > secondArray.length ? firstArray: secondArray);
+        double[] shorterArray = (firstArray.length < secondArray.length ? firstArray : secondArray);
+        double[] longerArray = (firstArray.length > secondArray.length ? firstArray : secondArray);
         double[] finalArray = new double[longerArray.length];
 
 
         for (int i = 0; i < shorterArray.length; i++) {
             finalArray[i] = (firstArray[i] + secondArray[i]);
         }
-        for (int i = shorterArray.length; i < longerArray.length; i++){
+        for (int i = shorterArray.length; i < longerArray.length; i++) {
             finalArray[i] = longerArray[i];
         }
         return finalArray;

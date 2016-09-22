@@ -1,9 +1,15 @@
 package Alignment;
 
 import com.sun.corba.se.spi.extension.ZeroPortPolicy;
+import com.sun.corba.se.spi.oa.ObjectAdapter;
+import java.util.List;
+import com.sun.tools.javac.util.Pair;
+
+import java.util.ArrayList;
 
 /**
- * Created by gabe on 13/09/2016.
+ * Class to perform parameter estimation on Hidden Markov Models using Baum Welch algorithm
+ *
  */
 public class BaumWelch {
 
@@ -31,6 +37,9 @@ public class BaumWelch {
     int seqLength;
     int[][] intArray;
 
+    double transitionDiff;
+    double emissionDiff;
+
     double fValue = 0;
     double bValue = 0;
     double ZERO_CONSTANT = 0.00000000000000000000000000001;
@@ -45,7 +54,7 @@ public class BaumWelch {
         this.numAlpha = emission.length;
         this.seqLength = seqArray[0].length();
 
-        int[][] intArray = new int[numSeqs][seqLength];
+        intArray = new int[numSeqs][seqLength];
 
 
 
@@ -167,10 +176,11 @@ public class BaumWelch {
                     }
                 }
 
+                // Calcualte the forward and backwards values
                 fValue = forward (n, f, start, transition, emission, fValue);
                 bValue = backward(n, b, start, transition, emission, bValue);
 
-                // Update recurrance arrays
+
                 //Update start matrix
                 for (int k = 0; k < numStates; k++) {
                     startR[k] += (1 / fValue) * f[k][0] * b[k][0];
@@ -210,34 +220,20 @@ public class BaumWelch {
             }
 
             // Update transition
-            double transitionDiff = 0;
-            for (int i=0; i< numStates; i++){
-                sum = 0;
-                for (int j=0; j< numStates; j++){
-                    sum += transitionR[i][j];
-                }
-                for (int j = 0; j < numStates; j++){
-                    if (Math.abs((transitionR[i][j] / sum) - transition[i][j]) > transitionDiff){
-                        transitionDiff = Math.abs((transitionR[i][j] / sum) - transition[i][j]);
-                    }
-                    transition[i][j] = transitionR[i][j] / sum;
-                }
-            }
+            transitionDiff = 0;
+            emissionDiff = 0;
 
-            // Update emission
-            double emissionDiff = 0;
-            for (int i = 0; i < numStates; i++){
-                sum = 0;
-                for (int j = 0; j< numAlpha; j++){
-                    sum += emissionR[i][j];
-                }
-                for (int j=0; j< numAlpha; j++){
-                    if (Math.abs((emissionR[i][j] / sum) - emission[i][j]) > emissionDiff) {
-                        emissionDiff = Math.abs((emissionR[i][j] / sum) - emission[i][j]);
-                    }
-                    emission[i][j] = emissionR[i][j] / sum;
-                }
-            }
+
+            List<Object> updatedTransitionValues = getUpdatedValues(transition, transitionR, numStates, transitionDiff);
+            List<Object> updatedEmissionValues = getUpdatedValues(emission, emissionR, numAlpha, emissionDiff);
+
+            transition = (double[][]) updatedTransitionValues.get(0);
+            transitionDiff = (Double) updatedTransitionValues.get(1);
+
+            emission = (double[][]) updatedEmissionValues.get(0);
+            emissionDiff = (Double) updatedEmissionValues.get(1);
+
+
 
             // Check for convergence
             if (startDiff + transitionDiff + emissionDiff < 0.000000000001) {
@@ -252,6 +248,17 @@ public class BaumWelch {
 
 
     }
+
+    /**
+     * Calculate the forward value
+     * @param n Number of iterations
+     * @param f Array of forward values
+     * @param start Array of starting state probabilities
+     * @param transition Array of transition probabilities
+     * @param emission Array of emission probabilities
+     * @param fValue Forward probability
+     * @return Double representing the updated forward probability
+     */
 
     double forward (int n, double [][] f, double [] start, double[][] transition, double [][] emission, double fValue){
         fValue = 0;
@@ -275,6 +282,17 @@ public class BaumWelch {
 
     }
 
+    /**
+     * Calculate the backwards value
+     * @param n Number of iterations
+     * @param b Array of backwards values
+     * @param start Array of starting state probabilities
+     * @param transition Array of transition probabilities
+     * @param emission Array of emission probabilities
+     * @param bValue Backwards probability
+     * @return Double representing the updated backward probability
+     */
+
     double backward (int n, double [][] b, double [] start, double[][] transition, double [][] emission, double bValue){
 
         bValue = 0;
@@ -295,6 +313,31 @@ public class BaumWelch {
         }
 
         return bValue;
+    }
+
+    public List<Object> getUpdatedValues(double[][] currentMatrix, double[][] updatedMatrix, int length, double diff){
+        for (int i = 0; i < numStates; i++){
+            double sum = 0;
+            for (int j = 0; j< length; j++){
+                sum += updatedMatrix[i][j];
+            }
+            for (int j=0; j< length; j++){
+                if (Math.abs((updatedMatrix[i][j] / sum) - currentMatrix[i][j]) > diff) {
+                    diff = Math.abs((updatedMatrix[i][j] / sum) - currentMatrix[i][j]);
+                }
+                currentMatrix[i][j] = updatedMatrix[i][j] / sum;
+            }
+        }
+
+        List<Object> updatedValues = new ArrayList<Object>();
+        updatedValues.add(currentMatrix);
+        updatedValues.add(diff);
+
+
+
+
+
+        return updatedValues;
     }
 
 

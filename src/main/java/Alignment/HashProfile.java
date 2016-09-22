@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by gabe on 15/08/2016.
+ * HashMap implementation of a sequence profile
  *
  *
  */
@@ -22,22 +22,30 @@ public class HashProfile {
     private List<Map<Character,MutableInt>> profileArray;
     private List<String> sequences;
 
+    /**
+     * Constructor if using a single sequence
+     * @param seq1 Sequence to build the profile from
+     */
     public HashProfile(String seq1){
+
         this.profileArray = new ArrayList<Map<Character,MutableInt>>();
         this.sequences = new ArrayList<String>();
         this.sequences.add(seq1);
-        for (int i = 0; i < seq1.length(); i++) {
 
+
+        for (int i = 0; i < seq1.length(); i++) {
             profileArray.add(i, new HashMap<Character, MutableInt>());
 
         }
+
         fillProfileArray(seq1);
-
-
-
     }
 
-
+    /**
+     * Constructor if adding a sequence to a profile
+     * @param profile The existing profile
+     * @param seq The sequence to add to the profile
+     */
     public HashProfile(HashProfile profile, String seq){
 
         this.profileArray = profile.getProfileArray();
@@ -46,6 +54,12 @@ public class HashProfile {
         fillProfileArray(seq);
 
     }
+
+    /**
+     *  Constructor if joining two profiles together
+     * @param profile1 The existing profile
+     * @param profile2 The profile to add
+     */
 
     public HashProfile(HashProfile profile1, HashProfile profile2){
         List<Map<Character,MutableInt>> newprofileArray = profile1.getProfileArray();
@@ -58,28 +72,6 @@ public class HashProfile {
 
     }
 
-    public HashProfile(HashProfile profile1, HashProfile profile2, List<List<Integer>> matchesIndex){
-//        for (Integer index: matchesIndex.get(0)){
-//            if (index == null){
-//                for (String seq: profile1.getSequences()){
-//                    seq = seq.substring(0, index) + "-" + seq.substring(index);
-//                }
-//            }
-//            System.out.println("Integer in 0 is " + index);
-//
-//        }
-//
-//        for (Integer index: matchesIndex.get(1)){
-//            if (index == null){
-//                for (String seq: profile2.getSequences()){
-//                    seq = seq.substring(0, index) + "-" + seq.substring(index);
-//                }
-//            }
-//            System.out.println("Integer in 1 is " + index);
-//
-//        }
-
-    }
 
     public void fillProfileArray(String seq){
 
@@ -147,16 +139,11 @@ public class HashProfile {
 
 
 
-
-
-    public List<Map<Character,MutableInt>> getProfileArray(){
-        return profileArray;
-    }
-
-    public List<String> getSequences(){
-        return this.sequences;
-    }
-
+    /**
+     * Get a specific column from the profile
+     * @param pos Position of the column to return
+     * @return String representing the characters at the chosen column
+     */
     public String getColumn(int pos){
         String columnList = "";
         for (String seq: this.getSequences()){
@@ -171,6 +158,19 @@ public class HashProfile {
         }
 
         return columnList;
+    }
+
+
+    public List<Map<Character,MutableInt>> getProfileArray(){
+        return profileArray;
+    }
+
+    public int getLength(){
+        return profileArray.size();
+    }
+
+    public List<String> getSequences(){
+        return this.sequences;
     }
 
 
@@ -189,15 +189,12 @@ public class HashProfile {
 
     public void printProfileArray(){
 
-
         for (int i = 0; i < profileArray.size(); i++){
             for (Character name: profileArray.get(i).keySet()){
                 String key = name.toString();
                 String value = profileArray.get(i).get(name).toString();
                 String map = profileArray.get(i).toString();
                 System.out.println("Column " + i + " Residue: " + key + " Count: " + value );
-//                System.out.println("Column " + i + " " + map );
-
 
             }
         }
