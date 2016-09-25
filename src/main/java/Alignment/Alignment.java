@@ -1,8 +1,9 @@
 package Alignment;
 
 
-import SubstitutionModels.Blosum62;
-import SubstitutionModels.Blosum62Probs;
+import Alignment.Utilities.MatrixUtils;
+import SubstitutionModels.SubstitutionMatrix;
+
 
 import java.util.*;
 
@@ -17,30 +18,31 @@ public class Alignment {
 
     private int openGapPenalty;
     private int extendGapPenalty;
-    private String seq1;
-    private String seq2;
     private HashProfile profile1;
     private HashProfile profile2;
     private List<Integer> stringIndexes;
     private List<Integer> nodeIndexes;
-    private double[][] matrix;
+    private SubstitutionMatrix subMatrix;
     private boolean MEA;
-    private int profileMatrixHeight;
     private HashProfile updatedProfile;
 
-    public Alignment(String seq1, String seq2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
+    private double[][] scores;
+    private int[][] iBackIndexes;
+    private int[][] jBackIndexes;
 
-        this(new HashProfile(seq1), new HashProfile(seq2), openGapPenalty, extendGapPenalty, matrix, MEA);
+    public Alignment(String seq1, String seq2, int openGapPenalty, int extendGapPenalty, SubstitutionMatrix subMatrix, boolean MEA) {
+
+        this(new HashProfile(seq1), new HashProfile(seq2), openGapPenalty, extendGapPenalty, subMatrix, MEA);
     }
 
-    public Alignment(HashProfile profile1, HashProfile profile2, int openGapPenalty, int extendGapPenalty, double[][] matrix, boolean MEA) {
+    public Alignment(HashProfile profile1, HashProfile profile2, int openGapPenalty, int extendGapPenalty, SubstitutionMatrix subMatrix, boolean MEA) {
         this.profile1 = profile1;
         this.profile2 = profile2;
         this.openGapPenalty = openGapPenalty;
         this.extendGapPenalty = extendGapPenalty;
         this.stringIndexes = new ArrayList<Integer>();
         this.nodeIndexes = new ArrayList<Integer>();
-        this.matrix = matrix;
+        this.subMatrix = subMatrix;
         this.MEA = MEA;
         this.updatedProfile = this.alignProfileToProfile();
 
@@ -62,7 +64,7 @@ public class Alignment {
 //    public double[] getMatchScore(char base, String seqvec) {
 //        double[] matches = new double[seqvec.length()];
 //        for (int i = 0; i < seqvec.length(); i++) {
-//            double matchScore = Blosum62.getDistance(seqvec.charAt(i), base);
+//            double matchScore = subMatrix.getDistance(seqvec.charAt(i), base);
 //            matches[i] = matchScore;
 //        }
 //
@@ -82,11 +84,7 @@ public class Alignment {
 
     public double[] getMEAMatchScore(int i, HashProfile profile) {
         double[] matches = new double[profile.getProfileArray().size()];
-        for (int j = 0; j < profile.getProfileArray().size(); j++) {
-            double matchScore = matrix[i + 1][j + 1];
-            matches[j] = matchScore;
-
-        }
+        System.arraycopy(subMatrix.getMatrix()[i + 1], 1, matches, 0, profile.getProfileArray().size());
 
         return matches;
     }
@@ -119,19 +117,17 @@ public class Alignment {
 
             for (Character name : profile1.getProfileArray().get(index).keySet()) {
                 if (name != '-') {
-                    Character profile1Name = name;
 
                     // Get count for specific residue
                     int profile1Value = profile1.getProfileArray().get(index).get(name).getValue();
 
                     for (Character name2 : profile2.getProfileArray().get(i).keySet()) {
                         if (name2 != '-') {
-                            Character profile2Name = name2;
                             int profile2Value = profile2.getProfileArray().get(i).get(name2).getValue();
 
 
                             // Get the score of matching these residues
-                            double matchScore = Blosum62.getDistance(profile1Name, profile2Name);
+                            double matchScore = subMatrix.getDistance(name, name2);
                             totalScore += profile1Value * profile2Value * matchScore;
                             matches[i] = totalScore / totalCount;
 
@@ -145,15 +141,6 @@ public class Alignment {
         return matches;
     }
 
-
-    /**
-     * Get characters in the sequence
-     *
-     * @return sequence string
-     */
-    public String getSequence() {
-        return this.seq1;
-    }
 
     /**
      * Get list of Node IDs representing current sequence after alignment, null for gaps in sequence
@@ -211,9 +198,9 @@ public class Alignment {
      * @return Object containing scores matrix, backSeq matrix, backGraph matrix, nodeID to
      * index, and index to node ID
      */
-    public List<Object> initialiseDyncamicProgrammingData(int l1, int l2) {
-//        l1 = this.seq1.length();
-//        Integer l2 = this.seq2.length();
+    public void initialiseDyncamicProgrammingData() {
+        int l1 = this.profile1.getLength();
+        int l2 = this.profile2.getLength();
         Map<Integer, Integer> nodeIDToIndex = new HashMap<Integer, Integer>();
         Map<Integer, Integer> nodeIndexToID = new HashMap<Integer, Integer>();
 
@@ -223,7 +210,7 @@ public class Alignment {
 //        }
 
         // Create score matrix
-        double[][] scores = new double[l1 + 1][l2 + 1];
+        scores = new double[l1 + 1][l2 + 1];
 
         // Fill top row with gap penalties
         for (int i = 0; i < l2; i++) {
@@ -236,7 +223,7 @@ public class Alignment {
         }
 
         // Array to hold the optimal i index positions
-        int[][] iBackIndexes = new int[l1 + 1][l2 + 1];
+        iBackIndexes = new int[l1 + 1][l2 + 1];
 
         //Fill first row with optimal previous cell move
         for (int i = 0; i < l1; i++) {
@@ -244,7 +231,7 @@ public class Alignment {
         }
 
         // Array to hold the optimal j index positions
-        int[][] jBackIndexes = new int[l1 + 1][l2 + 1];
+        jBackIndexes = new int[l1 + 1][l2 + 1];
 
         // Fill first column with optimal previous cell move
         for (int i = 0; i < l2; i++) {
@@ -258,7 +245,7 @@ public class Alignment {
         initialisedData.add(jBackIndexes);
         initialisedData.add(iBackIndexes);
 
-        return initialisedData;
+//        return initialisedData;
 
     }
 
@@ -281,18 +268,18 @@ public class Alignment {
 
         besti -= 1;
         bestj -= 1;
-        List<Integer> terminalIndices = new ArrayList<Integer>();
+//        List<Integer> terminalIndices = new ArrayList<Integer>();
 
 
         double bestScore = scores[besti][bestj];
 
-        for (int i = 0; i < terminalIndices.size(); i++) {
-            double score = scores[terminalIndices.get(i)][bestj];
-            if (score > bestScore) {
-                bestScore = score;
-                besti = terminalIndices.get(i);
-            }
-        }
+//        for (int i = 0; i < terminalIndices.size(); i++) {
+//            double score = scores[terminalIndices.get(i)][bestj];
+//            if (score > bestScore) {
+//                bestScore = score;
+//                besti = terminalIndices.get(i);
+//            }
+//        }
 
         List<Integer> profile1Indexes = new ArrayList<Integer>();
         List<Integer> profile2Indexes = new ArrayList<Integer>();
@@ -378,11 +365,9 @@ public class Alignment {
         }
 
 
-        // Create new profile alignment by joining two updated profiles together
-        HashProfile updatedProfile = new HashProfile(profile1, profile2);
+        // Return new profile alignment by joining two updated profiles together
 
-
-        return updatedProfile;
+        return new HashProfile(profile1, profile2);
 
     }
 
@@ -553,12 +538,14 @@ public class Alignment {
         int l1 = this.profile1.getProfileArray().size();
         int l2 = this.profile2.getProfileArray().size();
 
-        //TODO: Fix up how initialisedData is returned
-        List<Object> initialisedData = this.initialiseDyncamicProgrammingData(l1, l2);
+        initialiseDyncamicProgrammingData();
 
-        double[][] scores = (double[][]) initialisedData.get(2);
-        int[][] jBackIndexes = (int[][]) initialisedData.get(3);
-        int[][] iBackIndexes = (int[][]) initialisedData.get(4);
+        //TODO: Fix up how initialisedData is returned
+//        List<Object> initialisedData = this.initialiseDyncamicProgrammingData(l1, l2);
+//
+//        double[][] scores = (double[][]) initialisedData.get(2);
+//        int[][] jBackIndexes = (int[][]) initialisedData.get(3);
+//        int[][] iBackIndexes = (int[][]) initialisedData.get(4);
 
         // Arrays to keep track of insert / deletion history and cost
         double[][] insertCost = new double[l1 + 1][l2 + 1];
@@ -576,7 +563,7 @@ public class Alignment {
         Arrays.fill(inserted, false);
 
 
-        double[] insscores = new double[l2 + 2];
+        double[] insscores;
 
         for (int i = 0; i < l1; i++) {
 
@@ -622,7 +609,7 @@ public class Alignment {
 
             // Get array of scores equal to previous row + the cost of moving to a deletion in current row
             double[] deleteScore = Arrays.copyOfRange(scores[i], 1, scores[0].length);
-            deleteScore = addArrays(deleteScore, Arrays.copyOfRange(deleteCost[i], 1, deleteCost[0].length));
+            deleteScore = MatrixUtils.addArrays(deleteScore, Arrays.copyOfRange(deleteCost[i], 1, deleteCost[0].length));
 
 
             // Array to store the best possible score for deleting at each position
@@ -633,7 +620,7 @@ public class Alignment {
 
 
             // Get array of scores equal to previous row + the cost of moving to a match in current row
-            double[] matchScore = addArrays(Arrays.copyOfRange(scores[i], 0, scores[0].length - 1), matchPoints);
+            double[] matchScore = MatrixUtils.addArrays(Arrays.copyOfRange(scores[i], 0, scores[0].length - 1), matchPoints);
 
             // Array to store the best possible score for matching at each position
             int[] bestMatch = new int[l2];
@@ -709,7 +696,7 @@ public class Alignment {
             Arrays.fill(inserted, false);
 
             // Get array of scores equal to match scores plus opening an insertion in current row
-            insscores = addArrays(scoreRow, insertRow);
+            insscores = MatrixUtils.addArrays(scoreRow, insertRow);
 
             for (int n = 0; n < l2; n++) {
                 /* If opening an insertion has equal or greater score than match or delete, update scores to reflect
@@ -751,63 +738,8 @@ public class Alignment {
     }
 
 
-    /**
-     * Method to add two arrays together by adding the contents of each respective index in each array together.
-     * For example
-     * [1,4,9,6] + [2,2,3] = [3,7,12,6]
-     *
-     * @param firstArray  first array to add
-     * @param secondArray second array to add
-     * @return int array with the add
-     */
-
-    //TODO: Move this helper method to the matrix helper methods
-    public static double[] addArrays(double[] firstArray, double[] secondArray) {
-
-        double[] shorterArray = (firstArray.length < secondArray.length ? firstArray : secondArray);
-        double[] longerArray = (firstArray.length > secondArray.length ? firstArray : secondArray);
-        double[] finalArray = new double[longerArray.length];
 
 
-        for (int i = 0; i < shorterArray.length; i++) {
-            finalArray[i] = (firstArray[i] + secondArray[i]);
-        }
-        for (int i = shorterArray.length; i < longerArray.length; i++) {
-            finalArray[i] = longerArray[i];
-        }
-        return finalArray;
-    }
 
 
-    //TODO: Remove printMatrix to helper Class
-    public static void printMatrix(double[][] matrix) {
-
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[0].length; j++) {
-                System.out.print(String.format("  %-10s", matrix[i][j]) + "|");
-            }
-            System.out.println();
-
-        }
-
-        System.out.println();
-
-    }
-
-    //TODO: Remove printMatrix to helper Class
-    public static void printMatrix(int[][] matrix) {
-
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[0].length; j++) {
-                System.out.print(String.format("  %-10s", matrix[i][j]) + "|");
-            }
-            System.out.println();
-
-        }
-
-        System.out.println();
-
-    }
 }

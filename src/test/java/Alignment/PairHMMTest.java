@@ -1,5 +1,6 @@
 package Alignment;
 
+import SubstitutionModels.SubstitutionMatrix;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -24,9 +25,11 @@ public class PairHMMTest {
         double epsilon = 0.1;
         double delta = 0.2;
 
+        SubstitutionMatrix blosum62 = new SubstitutionMatrix("blosum62");
 
 
-        PairHMM pairHMM = new PairHMM(firstJoined, secondJoined, tau, epsilon, delta);
+
+        PairHMM pairHMM = new PairHMM(firstJoined, secondJoined, tau, epsilon, delta, blosum62);
         return pairHMM;
 
     }

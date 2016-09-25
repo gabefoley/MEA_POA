@@ -1,16 +1,14 @@
 package Alignment;
 
-import SubstitutionModels.Blosum62Probs;
-//import SubstitutionModels.ExampleModel;
+import SubstitutionModels.SubstitutionMatrix;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
+
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
- * Created by gabe on 3/05/2016.
+ * PairHMM for aligning sequences
  */
 public class PairHMM {
 
@@ -20,28 +18,47 @@ public class PairHMM {
     private double[][] vX;
     private double[][] vY;
     private String[][] tracebackM, tracebackX, tracebackY;
+//    private double forwardProb, backwardProb;
 
-    private HashMap<Integer, Integer> alignedPairs;
+    private SubstitutionMatrix subMatrix;
     private double tau;
-    private HashProfile updatedProfile;
 
-    public PairHMM(String seq1, String seq2, double tau, double epsilon, double delta) {
+    public PairHMM(String seq1, String seq2, double tau, double epsilon, double delta, SubstitutionMatrix subMatrix) {
 
-        this(new HashProfile(seq1), new HashProfile(seq2), tau, epsilon, delta);
+        this(new HashProfile(seq1), new HashProfile(seq2), tau, epsilon, delta, subMatrix);
+    }
+
+    public PairHMM(HashProfile profile1, HashProfile profile2, double[] start, double[][] transition, double[][] emission, SubstitutionMatrix subMatrix){
+        this.profile1 = profile1;
+        this.profile2 = profile2;
+
+        this.subMatrix = subMatrix;
+
+        //TODO: Current BW allows for transition between X and Y
+        this.transitionMM = transition[0][0];
+        this.transitionMX = transition[0][1];
+        this.transitionMY = transition[0][2];
+        this.transitionXM = transition[1][0];
+        this.transitionXX = transition[1][1];
+        this.transitionYM = transition[2][0];
+        this.transitionYY = transition[2][2];
+
     }
 
 
-    public PairHMM(HashProfile profile1, HashProfile profile2, double tau, double epsilon, double delta) {
+    public PairHMM(HashProfile profile1, HashProfile profile2, double tau, double epsilon, double delta, SubstitutionMatrix subMatrix) {
+        this.tau = tau;
 
         this.profile1 = profile1;
         this.profile2 = profile2;
+
+        this.subMatrix = subMatrix;
 
         this.transitionMM = 1 - (2 * delta) - tau;
         this.transitionMX = this.transitionMY = delta;
         this.transitionXX = this.transitionYY = epsilon;
         this.transitionXM = this.transitionYM = 1 - epsilon - tau;
 
-        this.tau = tau;
 
         this.vM = new double[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
         this.vX = new double[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
@@ -52,12 +69,7 @@ public class PairHMM {
         this.tracebackY = new String[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
 
         vM[0][0] = 1;
-
-
     }
-
-
-
 
     // Fill out the match matrix
 
@@ -69,62 +81,10 @@ public class PairHMM {
         }
 
 
-
-        double totalScore = 0;
-        double totalCount = 0;
-        double profile1Count = 0;
-        double profile2Count = 0;
-        //TODO: Check calculation of profileCounts - maybe add it back into the loop
-        //TODO: Check maths on summing profiles
-        //TODO: Check 1 vs 1 for the pairwise case
-
-        for (Character residue : profile1.getProfileArray().get(i-1).keySet()){
-            profile1Count += profile1.getProfileArray().get(i-1).get(residue).getValue();
-        }
-
-        for (Character residue : profile2.getProfileArray().get(j-1).keySet()){
-            profile2Count += profile2.getProfileArray().get(j-1).get(residue).getValue();
-        }
-
-        totalCount = profile1Count * profile2Count;
+        double totalCount = getTotalCount(profile1, profile2, i, j);
+        double totalScore = getTotalScore(profile1, profile2, i, j, subMatrix);
 
 
-
-//        double profile1Count = profile1.getProfileArray().get(i-1).keySet().size();
-//        double profile2Count = profile2.getProfileArray().get(i-1).keySet().size();
-        for (Character name : profile1.getProfileArray().get(i - 1).keySet()) {
-            if (name != '-') {
-                Character profile1Name = name;
-
-
-                int profile1Value = profile1.getProfileArray().get(i - 1).get(name).getValue();
-
-                for (Character name2 : profile2.getProfileArray().get(j - 1).keySet()) {
-                    if (name2 != '-') {
-                        Character profile2Name = name2;
-                        int profile2Value = profile2.getProfileArray().get(j - 1).get(name2).getValue();
-
-                        double matchScore = Blosum62Probs.getDistance(profile1Name, profile2Name);
-//                        double matchScore = 2;
-                        totalScore += profile1Value * profile2Value * matchScore;
-//                        totalCount += profile2Value;
-
-//                        System.out.println("Postion: " + (i - 1));
-//                        System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
-//                        System.out.println("Profile 2 residue: " + profile2Name + " and count: " + profile2Value);
-                    }
-//                    totalCount += profile1Value;
-                }
-            }
-
-        }
-
-
-
-//        double emissionM = ExampleModel.getDistance(profile1.charAt(i-1), profile2.charAt(j - 1));
-//        System.out.println("I and J:" + i + "" + j);
-//        System.out.println("Total count is " + totalCount);
-//        double emissionM = totalScore / (profile1Count * profile2Count);
         double emissionM = totalScore / (totalCount);
 
 
@@ -177,8 +137,6 @@ public class PairHMM {
 
         }
 
-//        }
-
     }
 
 
@@ -190,7 +148,6 @@ public class PairHMM {
         }
 
         double emissionY = 0.25;
-//        for (int k = 1; k < j; k++) {
 
         double currentTransitionYY = transitionYY * vY[i - 1][j];
         double currentTransitionMY = transitionMY * vM[i - 1][j];
@@ -215,7 +172,6 @@ public class PairHMM {
         int j = profile2.getProfileArray().size();
         List<Integer> profile1Matches = new ArrayList<Integer>();
         List<Integer > profile2Matches = new ArrayList<Integer>();
-        List<String> output = new ArrayList<String>();
         int curstrIdx = 0;
         int curnodeIdx = 0;
 
@@ -225,9 +181,7 @@ public class PairHMM {
             if ((vM[i][j] > vX[i][j]) && (vM[i][j] > vY[i][j])) {
                 profile1Matches.add(0, i - 1);
                 profile2Matches.add(0, j - 1);
-//                seq1Output = profile1.substring(i-1, i) + seq1Output;
-//                seq2Output = profile2.substring(j-1, j) + seq2Output;
-//                alignedPairs.put(i,j);
+
                 lastState = tracebackM[i][j];
                 curstrIdx = j - 1;
                 curnodeIdx = i - 1;
@@ -237,8 +191,6 @@ public class PairHMM {
             }
 
             else if((vX[i][j]) > vM[i][j] && (vX[i][j]) > vY[i][j]){
-//                seq1Output = "-" + seq1Output;
-//                seq2Output = profile2.substring(j-1, j) + seq2Output;
                 profile1Matches.add(0, -1);
                 profile2Matches.add(0, j - 1);
 
@@ -247,31 +199,26 @@ public class PairHMM {
             }
 
             else {
-//                seq1Output = profile1.substring(i-1, i) + seq1Output;
-//                seq2Output = "-" + seq2Output;
+
                 profile1Matches.add(0, i - 1);
                 profile2Matches.add(0, -1);
                 lastState = tracebackY[i][j];
                 i--;
             }
 
-//            n--;
 
             while ((i > 0) && (j > 0)) {
-                if (lastState == "M"){
+                if (lastState.equals("M")){
                     profile1Matches.add(0, i - 1);
                     profile2Matches.add(0, j - 1);
-//                    seq1Output = profile1.charAt(i-1) + seq1Output;
-//                    seq2Output = profile2.charAt(j-1) + seq2Output;
                     lastState = tracebackM[i][j];
-//                    alignedPairs.put(i,j);
                     curnodeIdx = i - 1;
                     curstrIdx = j - 1;
 
                     i--;
                     j--;
                 }
-                else if (lastState == "Y"){
+                else if (lastState.equals("Y")){
 //                    seq1Output = profile1.charAt(i-1) + seq1Output;
 //                    seq2Output = "-" + seq2Output;
                     profile1Matches.add(0, i - 1);
@@ -281,14 +228,12 @@ public class PairHMM {
                 }
 
                 else {
-//                    seq1Output = "-" + seq1Output;
-//                    seq2Output = profile2.charAt(j-1) + seq2Output;
+
                     profile1Matches.add(0, -1);
                     profile2Matches.add(0, j - 1);
                     lastState = tracebackX[i][j];
                     j--;
                 }
-//                n--;
             }
 
             // Fill out the remaining indexes of each profile
@@ -305,14 +250,9 @@ public class PairHMM {
                 curstrIdx -= 1;
 
             }
-//            n++;
-            //TODO: Remove this arraylist and return thisPairHMM correctly as profile
-//            output.add(profile1Matches);
-//            output.add(profile2Matches);
+
         }
 
-
-//        return output;
 
         //TODO: Make calling gaps a function
         List<Integer> gapPos = new ArrayList<Integer>();
@@ -342,10 +282,7 @@ public class PairHMM {
             profile2.addGaps(gapPos2);
         }
 
-
-
-        HashProfile updatedProfile = new HashProfile(profile1, profile2);
-        return updatedProfile;
+        return new HashProfile(profile1, profile2);
 
 
     }
@@ -369,8 +306,8 @@ public class PairHMM {
 
         }
 
-        double forwardProb = tau * (fM[profile1.getProfileArray().size()][profile2.getProfileArray().size()] + fX[profile1.getProfileArray().size()][profile2.getProfileArray().size()] +
-                fY[profile1.getProfileArray().size()][profile2.getProfileArray().size()]);
+//        double forwardProb = tau * (fM[profile1.getProfileArray().size()][profile2.getProfileArray().size()] + fX[profile1.getProfileArray().size()][profile2.getProfileArray().size()] +
+//                fY[profile1.getProfileArray().size()][profile2.getProfileArray().size()]);
 
         return fM;
     }
@@ -383,56 +320,9 @@ public class PairHMM {
 
         else {
 
-//            double emissionM = ExampleModel.getDistance(profile1.charAt(i - 1), profile2.charAt(j - 1));
 
-            double totalScore = 0;
-            double totalCount = 0;
-            double profile1Count = 0;
-            double profile2Count = 0;
-            //TODO: Check calculation of profileCounts - maybe add it back into the loop
-            //TODO: Check maths on summing profiles
-            //TODO: Check 1 vs 1 for the pairwise case
-
-            for (Character residue : profile1.getProfileArray().get(i-1).keySet()){
-                profile1Count += profile1.getProfileArray().get(i-1).get(residue).getValue();
-            }
-
-            for (Character residue : profile2.getProfileArray().get(j-1).keySet()){
-                profile2Count += profile2.getProfileArray().get(j-1).get(residue).getValue();
-            }
-
-            totalCount = profile1Count * profile2Count;
-
-
-
-//        double profile1Count = profile1.getProfileArray().get(i-1).keySet().size();
-//        double profile2Count = profile2.getProfileArray().get(i-1).keySet().size();
-            for (Character name : profile1.getProfileArray().get(i - 1).keySet()) {
-                if (name != '-') {
-                    Character profile1Name = name;
-
-
-                    int profile1Value = profile1.getProfileArray().get(i - 1).get(name).getValue();
-
-                    for (Character name2 : profile2.getProfileArray().get(j - 1).keySet()) {
-                        if (name2 != '-') {
-                            Character profile2Name = name2;
-                            int profile2Value = profile2.getProfileArray().get(j - 1).get(name2).getValue();
-
-                            double matchScore = Blosum62Probs.getDistance(profile1Name, profile2Name);
-//                        double matchScore = 2;
-                            totalScore += profile1Value * profile2Value * matchScore;
-//                        totalCount += profile2Value;
-
-//                        System.out.println("Postion: " + (i - 1));
-//                        System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
-//                        System.out.println("Profile 2 residue: " + profile2Name + " and count: " + profile2Value);
-                        }
-//                    totalCount += profile1Value;
-                    }
-                }
-
-            }
+            double totalCount = getTotalCount(profile1, profile2, i, j);
+            double totalScore = getTotalScore(profile1, profile2, i, j, subMatrix);
 
             double emissionM = totalScore / (totalCount);
 
@@ -510,7 +400,7 @@ public class PairHMM {
         }
 
 
-        double backwardProb = bM[1][1] + bX[1][1] + bY[1][1];
+//        backwardProb = bM[1][1] + bX[1][1] + bY[1][1];
 
 
         return bM;
@@ -520,75 +410,12 @@ public class PairHMM {
 
     public void sumbM(int i, int j, double[][] bM, double[][] bX, double[][] bY){
 
-        double emissionM;
-        if (i > profile1.getProfileArray().size() - 1 || j > profile2.getProfileArray().size() - 1){
-            emissionM = 0;
-        }
-        else {
-//            emissionM = ExampleModel.getDistance(profile1.charAt(i), profile2.charAt(j));
-            double totalScore = 0;
-            double totalCount = 0;
-            double profile1Count = 0;
-            double profile2Count = 0;
-            //TODO: Check calculation of profileCounts - maybe add it back into the loop
-            //TODO: Check maths on summing profiles
-            //TODO: Check 1 vs 1 for the pairwise case
+        double emissionM = getEmission(profile1, profile2, i, j);
 
-            for (Character residue : profile1.getProfileArray().get(i-1).keySet()){
-                profile1Count += profile1.getProfileArray().get(i-1).get(residue).getValue();
-            }
-
-            for (Character residue : profile2.getProfileArray().get(j-1).keySet()){
-                profile2Count += profile2.getProfileArray().get(j-1).get(residue).getValue();
-            }
-
-            totalCount = profile1Count * profile2Count;
-
-
-
-//        double profile1Count = profile1.getProfileArray().get(i-1).keySet().size();
-//        double profile2Count = profile2.getProfileArray().get(i-1).keySet().size();
-            for (Character name : profile1.getProfileArray().get(i - 1).keySet()) {
-                if (name != '-') {
-                    Character profile1Name = name;
-
-
-                    int profile1Value = profile1.getProfileArray().get(i - 1).get(name).getValue();
-
-                    for (Character name2 : profile2.getProfileArray().get(j - 1).keySet()) {
-                        if (name2 != '-') {
-                            Character profile2Name = name2;
-                            int profile2Value = profile2.getProfileArray().get(j - 1).get(name2).getValue();
-
-                            double matchScore = Blosum62Probs.getDistance(profile1Name, profile2Name);
-//                        double matchScore = 2;
-                            totalScore += profile1Value * profile2Value * matchScore;
-//                        totalCount += profile2Value;
-
-//                        System.out.println("Postion: " + (i - 1));
-//                        System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
-//                        System.out.println("Profile 2 residue: " + profile2Name + " and count: " + profile2Value);
-                        }
-//                    totalCount += profile1Value;
-                    }
-                }
-
-            }
-
-
-
-//        double emissionM = ExampleModel.getDistance(profile1.charAt(i-1), profile2.charAt(j - 1));
-//        System.out.println("I and J:" + i + "" + j);
-//        System.out.println("Total count is " + totalCount);
-//        double emissionM = totalScore / (profile1Count * profile2Count);
-            emissionM = totalScore / (totalCount);
-        }        double emissionX = 0.25;
+        double emissionX = 0.25;
         double emissionY = 0.25;
 
-//        if((i + 1 > profile1.length()) || (j + 1 > profile2.length())){
-//            bM[i][j] = 0;
-//        }
-//        else {
+
 
 
         double backwardMM = emissionM * transitionMM * bM[i + 1][j + 1];
@@ -596,77 +423,16 @@ public class PairHMM {
         double backwardYM = emissionY * transitionMY * bY[i + 1][j];
 
         bM[i][j] = backwardMM + backwardXM + backwardYM;
-//        }
 
     }
 
     public void sumbX(int i, int j, double[][] bM, double[][] bX){
 
-
-
-        double emissionM;
-        if (i > profile1.getProfileArray().size() - 1 || j > profile2.getProfileArray().size() - 1){
-            emissionM = 0;
-        }
-        else {
-//            emissionM = ExampleModel.getDistance(profile1.charAt(i), profile2.charAt(j));
-            double totalScore = 0;
-            double totalCount = 0;
-            double profile1Count = 0;
-            double profile2Count = 0;
-            //TODO: Check calculation of profileCounts - maybe add it back into the loop
-            //TODO: Check maths on summing profiles
-            //TODO: Check 1 vs 1 for the pairwise case
-
-            for (Character residue : profile1.getProfileArray().get(i-1).keySet()){
-                profile1Count += profile1.getProfileArray().get(i-1).get(residue).getValue();
-            }
-
-            for (Character residue : profile2.getProfileArray().get(j-1).keySet()){
-                profile2Count += profile2.getProfileArray().get(j-1).get(residue).getValue();
-            }
-
-            totalCount = profile1Count * profile2Count;
+        double emissionM = getEmission(profile1, profile2, i, j);
 
 
 
-//        double profile1Count = profile1.getProfileArray().get(i-1).keySet().size();
-//        double profile2Count = profile2.getProfileArray().get(i-1).keySet().size();
-            for (Character name : profile1.getProfileArray().get(i - 1).keySet()) {
-                if (name != '-') {
-                    Character profile1Name = name;
-
-
-                    int profile1Value = profile1.getProfileArray().get(i - 1).get(name).getValue();
-
-                    for (Character name2 : profile2.getProfileArray().get(j - 1).keySet()) {
-                        if (name2 != '-') {
-                            Character profile2Name = name2;
-                            int profile2Value = profile2.getProfileArray().get(j - 1).get(name2).getValue();
-
-                            double matchScore = Blosum62Probs.getDistance(profile1Name, profile2Name);
-//                        double matchScore = 2;
-                            totalScore += profile1Value * profile2Value * matchScore;
-//                        totalCount += profile2Value;
-
-//                        System.out.println("Postion: " + (i - 1));
-//                        System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
-//                        System.out.println("Profile 2 residue: " + profile2Name + " and count: " + profile2Value);
-                        }
-//                    totalCount += profile1Value;
-                    }
-                }
-
-            }
-
-
-
-//        double emissionM = ExampleModel.getDistance(profile1.charAt(i-1), profile2.charAt(j - 1));
-//        System.out.println("I and J:" + i + "" + j);
-//        System.out.println("Total count is " + totalCount);
-//        double emissionM = totalScore / (profile1Count * profile2Count);
-            emissionM = totalScore / (totalCount);
-        }            double emissionX = 0.25;
+        double emissionX = 0.25;
 
 
         double backwardMX = emissionM * transitionXM * bM[i + 1][j + 1];
@@ -674,82 +440,14 @@ public class PairHMM {
 
         bX[i][j] = backwardMX + backwardXX;
 
-//        }
 
 
     }
 
     public void sumbY(int i, int j, double[][] bM, double[][] bY) {
 
-//        System.out.println(" BY: Cell is " + i + " " + j + " seq1char is " + profile1.charAt(i - 1) + " seq2char is " + profile2.charAt(j-1));
+        double emissionM = getEmission(profile1, profile2, i, j);
 
-
-//        if (i + 1 > profile1.length()) {
-//            bY[i][j] = 0;
-//        } else {
-        double emissionM = 0;
-        if (i > profile1.getProfileArray().size() - 1 || j > profile2.getProfileArray().size() - 1){
-            emissionM = 0;
-        }
-        else {
-//            emissionM = ExampleModel.getDistance(profile1.charAt(i), profile2.charAt(j));
-            double totalScore = 0;
-            double totalCount = 0;
-            double profile1Count = 0;
-            double profile2Count = 0;
-            //TODO: Check calculation of profileCounts - maybe add it back into the loop
-            //TODO: Check maths on summing profiles
-            //TODO: Check 1 vs 1 for the pairwise case
-
-            for (Character residue : profile1.getProfileArray().get(i-1).keySet()){
-                profile1Count += profile1.getProfileArray().get(i-1).get(residue).getValue();
-            }
-
-            for (Character residue : profile2.getProfileArray().get(j-1).keySet()){
-                profile2Count += profile2.getProfileArray().get(j-1).get(residue).getValue();
-            }
-
-            totalCount = profile1Count * profile2Count;
-
-
-
-//        double profile1Count = profile1.getProfileArray().get(i-1).keySet().size();
-//        double profile2Count = profile2.getProfileArray().get(i-1).keySet().size();
-            for (Character name : profile1.getProfileArray().get(i - 1).keySet()) {
-                if (name != '-') {
-                    Character profile1Name = name;
-
-
-                    int profile1Value = profile1.getProfileArray().get(i - 1).get(name).getValue();
-
-                    for (Character name2 : profile2.getProfileArray().get(j - 1).keySet()) {
-                        if (name2 != '-') {
-                            Character profile2Name = name2;
-                            int profile2Value = profile2.getProfileArray().get(j - 1).get(name2).getValue();
-
-                            double matchScore = Blosum62Probs.getDistance(profile1Name, profile2Name);
-//                        double matchScore = 2;
-                            totalScore += profile1Value * profile2Value * matchScore;
-//                        totalCount += profile2Value;
-
-//                        System.out.println("Postion: " + (i - 1));
-//                        System.out.println("Profile 1 residue: " + profile1Name + " and count: " + profile1Value);
-//                        System.out.println("Profile 2 residue: " + profile2Name + " and count: " + profile2Value);
-                        }
-//                    totalCount += profile1Value;
-                    }
-                }
-
-            }
-
-
-
-//        double emissionM = ExampleModel.getDistance(profile1.charAt(i-1), profile2.charAt(j - 1));
-//        System.out.println("I and J:" + i + "" + j);
-//        System.out.println("Total count is " + totalCount);
-//        double emissionM = totalScore / (profile1Count * profile2Count);emissionM = totalScore / (totalCount);
-            emissionM = totalScore / totalCount;
-        }
         double emissionY = 0.25;
 
         double backwardMY = emissionM * transitionYM * bM[i + 1][j + 1];
@@ -757,21 +455,10 @@ public class PairHMM {
 
         bY[i][j] = backwardMY + backwardYY;
 
-//        }
     }
 
-//    public void performMEA(){
-//        double[][] fM = this.forwardAlgorithm();
-//        double[][] bM = this.backwardAlgorithm();
-//        double[][] pM = calcPosteriorMatrix(fM, bM);
-//
-//        Alignment alignment = new Alignment(profile1, profile2, 0, 0, pM, true);
-//
-//
-//
-//    }
 
-    public HashProfile getViterbiAlignmnet(){
+    public HashProfile getViterbiAlignment(){
 
         for (int i = 0; i <= profile1.getProfileArray().size(); i++) {
             for (int j = 0; j <= profile2.getProfileArray().size(); j ++) {
@@ -784,8 +471,6 @@ public class PairHMM {
 
         }
 
-
-        //TODO: Return alignment correctly
         return traceback();
 
 
@@ -797,62 +482,11 @@ public class PairHMM {
         double[][] bM = this.backwardAlgorithm();
         double[][] pM = calcPosteriorMatrix(fM, bM);
 
-        Alignment alignment = new Alignment(profile1, profile2, 0, 0, pM, true);
+        SubstitutionMatrix subMatrix = new SubstitutionMatrix(pM);
+
+        Alignment alignment = new Alignment(profile1, profile2, 0, 0, subMatrix, true);
 
         return alignment.getUpdatedProfile();
-    }
-
-
-    public static void printMatrix(double[][] matrix) {
-        NumberFormat formatter = new DecimalFormat();
-        formatter = new DecimalFormat("0.#####E0");
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[0].length; j++) {
-                System.out.print(String.format("  %-10s", formatter.format(matrix[i][j])) + "|");
-            }
-            System.out.println();
-
-        }
-
-        System.out.println();
-
-    }
-
-    public static void printMatrix(int[][] matrix) {
-        NumberFormat formatter = new DecimalFormat();
-        formatter = new DecimalFormat("0.#####E0");
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[0].length; j++) {
-                System.out.print(String.format("  %-10s", formatter.format(matrix[i][j])) + "|");
-            }
-            System.out.println();
-
-        }
-
-        System.out.println();
-
-    }
-
-    public static void printMatrix(String[][] matrix) {
-
-
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[0].length; j++) {
-                System.out.print(String.format("  %-10s", matrix[i][j]) + "|");
-            }
-            System.out.println();
-
-        }
-
-        System.out.println();
-
-    }
-
-    public HashMap<Integer, Integer> getAlignedPairs(){
-        return this.alignedPairs;
-
     }
 
     public static double[][] calcPosteriorMatrix(double[][] fM, double[][]bM){
@@ -869,5 +503,69 @@ public class PairHMM {
 
         return pM;
     }
+
+
+    public double getTotalCount(HashProfile profile1, HashProfile profile2, int i, int j){
+        double profile1Count = 0;
+        double profile2Count = 0;
+        //TODO: Check calculation of profileCounts - maybe add it back into the loop
+        //TODO: Check maths on summing profiles
+
+        for (Character residue : profile1.getProfileArray().get(i-1).keySet()){
+            profile1Count += profile1.getProfileArray().get(i-1).get(residue).getValue();
+        }
+
+        for (Character residue : profile2.getProfileArray().get(j-1).keySet()){
+            profile2Count += profile2.getProfileArray().get(j-1).get(residue).getValue();
+        }
+
+        return profile1Count * profile2Count;
+    }
+
+    public double getTotalScore(HashProfile profile1, HashProfile profile2, int i, int j, SubstitutionMatrix subMatrix){
+        double totalScore = 0;
+
+        for (Character name : profile1.getProfileArray().get(i - 1).keySet()) {
+            if (name != '-') {
+
+
+                int profile1Value = profile1.getProfileArray().get(i - 1).get(name).getValue();
+
+                for (Character name2 : profile2.getProfileArray().get(j - 1).keySet()) {
+                    if (name2 != '-') {
+                        int profile2Value = profile2.getProfileArray().get(j - 1).get(name2).getValue();
+
+
+                        double matchScore = subMatrix.getDistance(name, name2);
+                        totalScore += profile1Value * profile2Value * matchScore;
+
+                    }
+                }
+            }
+
+        }
+
+        return totalScore;
+
+    }
+
+    public double getEmission(HashProfile profile1, HashProfile profile2, int i, int j){
+        double emission;
+        if (i > profile1.getProfileArray().size() - 1 || j > profile2.getProfileArray().size() - 1){
+            emission = 0;
+        }
+        else {
+
+            double totalCount = getTotalCount(profile1, profile2, i, j);
+
+            double totalScore = getTotalScore(profile1, profile2, i, j, subMatrix);
+
+            emission = totalScore / (totalCount);
+        }
+
+        return emission;
+    }
+
+
 
 }

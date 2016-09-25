@@ -59,4 +59,19 @@ public class HashProfileTest {
     public void testPrintProfileArray() throws Exception {
 
     }
+
+    @Test
+    public void testGetColumn() throws Exception {
+
+    }
+
+    @Test
+    public void testGetLength() throws Exception {
+
+    }
+
+    @Test
+    public void testPrintProfileArray1() throws Exception {
+
+    }
 }

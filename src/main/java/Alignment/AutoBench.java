@@ -1,14 +1,12 @@
 package Alignment;
 
 /**
- * Created by gabe on 6/09/2016.
+ * Automatic alignment, benchmarking and result visualisation for sequence alignment benchmarks
  */
 
 import java.io.*;
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
 
-import SubstitutionModels.Blosum62Probs;
+import SubstitutionModels.SubstitutionMatrix;
 import org.biojava.nbio.alignment.Alignments;
 import org.biojava.nbio.alignment.SimpleGapPenalty;
 import org.biojava.nbio.alignment.template.GapPenalty;
@@ -18,18 +16,13 @@ import org.biojava.nbio.core.exceptions.CompoundNotFoundException;
 import org.biojava.nbio.core.sequence.ProteinSequence;
 import org.biojava.nbio.core.sequence.compound.AminoAcidCompound;
 import org.biojava.nbio.core.sequence.compound.AminoAcidCompoundSet;
-import org.biojava.nbio.core.sequence.io.FastaReader;
-import org.biojava.nbio.core.sequence.io.FastaReaderHelper;
-import org.biojava.nbio.core.sequence.io.GenericFastaHeaderParser;
-import org.biojava.nbio.core.sequence.io.ProteinSequenceCreator;
 
-import Alignment.Utilities.Sequence;
 import org.biojava.nbio.core.util.ConcurrencyTools;
+import org.rosuda.JRI.Rengine;
+
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 
 public class AutoBench {
     public static void main(String args[]) throws Exception {
@@ -37,15 +30,15 @@ public class AutoBench {
         String dir = args[0];
         String inputDir = dir + "/in";
         String refDir = dir + "/ref";
-
-        File file = null;
         String[] inputs;
 
-
+        ArrayList<String> seqsList = new ArrayList<String>();
+        ArrayList<Double> scoresList = new ArrayList<Double>();
+        String seqString = "";
+        String scoreString = "";
 
         try {
-            // create new file object
-            file = new File(refDir);
+            File file = new File(refDir);
 
             // array of files and directory
             inputs = file.list();
@@ -64,30 +57,18 @@ public class AutoBench {
                 // Align the input sequences
                 int multiGapOpen = -10;
                 int multiGapExtend = -1;
+                SubstitutionMatrix subMatrix = new SubstitutionMatrix("blosum62");
 
                 // Get BioJavaMSA
-                Profile<ProteinSequence, AminoAcidCompound> bioJavaMSA = getBioJavaMSA(seqs, multiGapOpen, multiGapExtend);
+//                Profile<ProteinSequence, AminoAcidCompound> bioJavaMSA = getBioJavaMSA(seqs, multiGapOpen, multiGapExtend);
 
                 // Get MSA
-                HashProfile MSA = getMSA(seqs, multiGapOpen, multiGapExtend);
+                HashProfile MSA = getMSA(seqs, multiGapOpen, multiGapExtend, subMatrix);
 
-//                System.out.println(bioJavaMSA);
-//
-//                System.out.println("--------------------------");
-//
-//
-//                for (String[] seq: refAlignment){
-//                    System.out.println(seq[1]);
-//                }
-//
-//                System.out.println("--------------------------");
-//
-//
-//                System.out.println(MSA);
 
                 // Get the good columns from calculated alignment
                 int msaCount = 0;
-                int bioJavaMSACount = 0;
+//                int bioJavaMSACount = 0;
 
                 for (String[] goodCol: goodCols) {
 
@@ -96,36 +77,28 @@ public class AutoBench {
                     }
 
 
-                    String bioJavaMSAColOrdered = "";
-
-                    if (bioJavaMSA.getCompoundsAt(Integer.valueOf(goodCol[0]) + 1) != null){
-                        List<AminoAcidCompound> bioJavaMSACol = bioJavaMSA.getCompoundsAt(Integer.valueOf(goodCol[0]) + 1);
-
-//                        bioJavaMSAColOrdered = "";
-                        for (AminoAcidCompound aa : bioJavaMSACol){
-                            bioJavaMSAColOrdered += aa;
-                        }
-
-                        char[] charArray = bioJavaMSAColOrdered.toCharArray();
-
-                        char temp = charArray[1];
-                        charArray[1] = charArray[2];
-                        charArray[2] = temp;
-
-                        bioJavaMSAColOrdered = new String (charArray);
-                    }
-
-                    if (goodCol[1].equals(bioJavaMSAColOrdered)) {
-                        bioJavaMSACount += 1;
-                    }
-
-
-
-
-
-
-
-
+//                    String bioJavaMSAColOrdered = "";
+//
+//                    if (bioJavaMSA.getCompoundsAt(Integer.valueOf(goodCol[0]) + 1) != null){
+//                        List<AminoAcidCompound> bioJavaMSACol = bioJavaMSA.getCompoundsAt(Integer.valueOf(goodCol[0]) + 1);
+//
+////                        bioJavaMSAColOrdered = "";
+//                        for (AminoAcidCompound aa : bioJavaMSACol){
+//                            bioJavaMSAColOrdered += aa;
+//                        }
+//
+//                        char[] charArray = bioJavaMSAColOrdered.toCharArray();
+//
+//                        char temp = charArray[1];
+//                        charArray[1] = charArray[2];
+//                        charArray[2] = temp;
+//
+//                        bioJavaMSAColOrdered = new String (charArray);
+//                    }
+//
+//                    if (goodCol[1].equals(bioJavaMSAColOrdered)) {
+//                        bioJavaMSACount += 1;
+//                    }
 
 
 //                    System.out.println(goodCol[0]);
@@ -138,12 +111,50 @@ public class AutoBench {
                 }
 
                 double msaCS = (double) msaCount / goodCols.size() * 100.0;
-                double bioJavaMSACS = (double) bioJavaMSACount / goodCols.size() * 100.0;
+//                double bioJavaMSACS = (double) bioJavaMSACount / goodCols.size() * 100.0;
 
 
                 System.out.printf("MSA Column Score for file " + input + " is: %.2f%%%n ", msaCS);
-                System.out.printf("BioJava MSA Column Score for file " + input + " is: %.2f%%%n ",  bioJavaMSACS);
+//                System.out.printf("BioJava MSA Column Score for file " + input + " is: %.2f%%%n ",  bioJavaMSACS);
                 System.out.println();
+
+                seqsList.add(input);
+                scoresList.add(msaCS);
+
+
+
+
+
+                seqString = "c(";
+
+                for (String seq: seqsList){
+                    seqString += "'" + seq + "',";
+                }
+
+                seqString = seqString.substring(0, seqString.lastIndexOf(","));
+
+                seqString += ")";
+
+                scoreString = "c(";
+
+                for (Double score: scoresList){
+                    scoreString += score + ",";
+                }
+
+                scoreString = scoreString.substring(0, scoreString.lastIndexOf(","));
+
+                scoreString += ")";
+
+                System.out.println(seqString);
+                System.out.println(scoreString);
+
+
+
+
+
+
+
+
 
 
 
@@ -154,12 +165,27 @@ public class AutoBench {
 
             }
 
+            Rengine engine = new Rengine(new String[] { "--no-save"}, false, null);
+
+            engine.eval("require(ggplot2)");
+            engine.eval("Seqs <-" + seqString);
+            engine.eval("Scores <-" + scoreString);
+            engine.eval("joined <- data.frame(Seqs, Scores)");
+            engine.eval("plot <- ggplot(data=joined, aes(x=Seqs, y=Scores, group=1)) + geom_line()");
+            engine.eval("ggsave('/Users/gabe/Dropbox/testScores.png', plot)");
+            System.out.println("Done");
+
         } catch (Exception e) {
-            // if any error occurs
             e.printStackTrace();
         }
     }
 
+    /**
+     * Get the conserved column numbers and their content from the benchmark database
+     * @param seqList List of sequences to get column numbers and content for
+     * @return ArrayList of String arrays representing the column number and their content
+     * @throws IOException
+     */
     public static ArrayList<String[]> getGoodCols(ArrayList<String[]> seqList) throws IOException{
 
         String seq = seqList.get(0)[1];
@@ -169,8 +195,8 @@ public class AutoBench {
         for (int i = 0; i < seq.length(); i ++) {
             String colChar = "";
             if (Character.isUpperCase(seq.charAt(i))) {
-                for (int j=0; j < seqList.size(); j++){
-                    colChar += seqList.get(j)[1].charAt(i);
+                for (String[] aSeqList : seqList) {
+                    colChar += aSeqList[1].charAt(i);
                 }
                 String[] colPos = new String[2];
                 colPos[0] = (String.valueOf(i));
@@ -187,12 +213,19 @@ public class AutoBench {
 
     }
 
+    /**
+     * Get the sequences from a file
+     * @param dir Directory where the sequences are
+     * @param input Filename of the file within the directory where the sequences are
+     * @return ArrayList of String array representing the sequences from the file
+     * @throws IOException
+     */
     public static ArrayList<String[]> getSeqs(String dir, String input) throws IOException{
 
         FileReader fr = new FileReader(dir + "/" +  input);
 
         BufferedReader br = new BufferedReader(fr);
-        String[] seqs = new String[2];
+        String[] seqs;
         ArrayList<String[]> seqList = new ArrayList<String[]>();
         int count = 0;
         while (( seqs = getNextSequence(br)) != null){
@@ -203,6 +236,12 @@ public class AutoBench {
         return seqList;
     }
 
+    /**
+     * Returns the next sequence in an opened file
+     * @param br The BufferedReader object representing the open file stream
+     * @return A string array with the sequence name and the full sequence
+     * @throws IOException
+     */
     public static String[] getNextSequence(BufferedReader br) throws IOException {
         String[] fastaSeq = new String[2];
 
@@ -241,6 +280,14 @@ public class AutoBench {
         return fastaSeq;
     }
 
+    /**
+     * Calculate a multiple sequence alignment using BioJava
+     * @param seqs Sequences to align
+     * @param multiGapOpen Gap opening penalty
+     * @param multiGapExtend Gap extension penalty
+     * @return Profile representing the multiple sequence alignment
+     * @throws CompoundNotFoundException
+     */
     public static Profile<ProteinSequence, AminoAcidCompound> getBioJavaMSA(ArrayList<String[]> seqs, int multiGapOpen, int multiGapExtend) throws CompoundNotFoundException {
         ArrayList<ProteinSequence> seqList = new ArrayList<ProteinSequence>();
 
@@ -259,7 +306,15 @@ public class AutoBench {
         return profile;
     }
 
-    public static HashProfile getMSA(ArrayList<String[]> seqs, int multiGapOpen, int multiGapExtend){
+    /**
+     * Calculate a multiple sequence alignment using Needleman Wunsch dynamic programming
+     * @param seqs Sequences to align
+     * @param multiGapOpen Gap opening penalty
+     * @param multiGapExtend Gap extension penalty
+     * @param subMatrix Substitution matrix
+     * @return Profile representing the multiple sequence alignment
+     */
+    public static HashProfile getMSA(ArrayList<String[]> seqs, int multiGapOpen, int multiGapExtend, SubstitutionMatrix subMatrix){
 
         ArrayList<HashProfile> seqList = new ArrayList<HashProfile>();
 
@@ -268,21 +323,8 @@ public class AutoBench {
             seqList.add(profile);
         }
 
-        HashProfile profile = alignProfilesRecursive(seqList.get(0), seqList.get(1), seqList, multiGapOpen, multiGapExtend, 1);
+        return alignProfilesRecursive(seqList.get(0), seqList.get(1), seqList, multiGapOpen, multiGapExtend, subMatrix, 1);
 
-
-//        for (int i = 0; i + 1 < seqList.size(); i++){
-//
-//
-//
-//
-//            HashProfile next = alignProfiles(seqList.get(i), seqList.get(i+1), multiGapOpen, multiGapExtend);
-//            HashProfile again = alignProfiles(next, i + 1)
-//
-//        }
-
-
-        return profile;
     }
 
 
@@ -293,12 +335,23 @@ public class AutoBench {
 //
 //    }
 
-    public static HashProfile alignProfilesRecursive (HashProfile first, HashProfile second, ArrayList<HashProfile> seqList, int multiGapOpen, int multiGapExtend, int counter){
-        Alignment alignment = new Alignment(first, second, multiGapOpen, multiGapExtend, Blosum62Probs.getMatrix(), false);
+    /**
+     * Method for aligning multiple profiles together
+     * @param first First profile to align
+     * @param second Second profile to align
+     * @param seqList List of all profiles to align
+     * @param multiGapOpen Gap opening penalty
+     * @param multiGapExtend Gap extension penalty
+     * @param subMatrix Substituion matrix
+     * @param counter Counter to keep track of which profile in the list to align
+     * @return Profile representing the multiple sequence alignment
+     */
+    public static HashProfile alignProfilesRecursive (HashProfile first, HashProfile second, ArrayList<HashProfile> seqList, int multiGapOpen, int multiGapExtend, SubstitutionMatrix subMatrix, int counter){
+        Alignment alignment = new Alignment(first, second, multiGapOpen, multiGapExtend, subMatrix, false);
         HashProfile profile = alignment.getUpdatedProfile();
         counter ++;
         if (counter < seqList.size()){
-            return alignProfilesRecursive(profile, seqList.get(counter), seqList, multiGapOpen, multiGapExtend, counter);
+            return alignProfilesRecursive(profile, seqList.get(counter), seqList, multiGapOpen, multiGapExtend, subMatrix, counter);
         }
 
         else {
@@ -340,21 +393,5 @@ public class AutoBench {
 
 
 
-//        // Create an R vector in the form of a string.
-//        String javaVector = "c(1,2,3,4,5)";
-//
-//        // Start Rengine.
-//        Rengine engine = new Rengine(new String[] { "--no-save" }, false, null);
-//
-//        // The vector that was created in JAVA context is stored in 'rVector' which is a variable in R context.
-//        engine.eval("rVector=" + javaVector);
-//
-//        //Calculate MEAN of vector using R syntax.
-//        engine.eval("meanVal=mean(rVector)");
-//
-//        //Retrieve MEAN value
-//        double mean = engine.eval("meanVal").asDouble();
-//
-//        //Print output values
-//        System.out.println("Mean of given vector is=" + mean);
+
 

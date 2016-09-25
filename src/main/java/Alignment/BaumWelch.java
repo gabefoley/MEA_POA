@@ -1,9 +1,7 @@
 package Alignment;
 
-import com.sun.corba.se.spi.extension.ZeroPortPolicy;
-import com.sun.corba.se.spi.oa.ObjectAdapter;
+import java.util.Arrays;
 import java.util.List;
-import com.sun.tools.javac.util.Pair;
 
 import java.util.ArrayList;
 
@@ -37,22 +35,63 @@ public class BaumWelch {
     int seqLength;
     int[][] intArray;
 
+    double[] start;
+    double[][] emission;
+    double[][] transition;
+
     double transitionDiff;
     double emissionDiff;
+
+    private String type;
+
+
 
     double fValue = 0;
     double bValue = 0;
     double ZERO_CONSTANT = 0.00000000000000000000000000001;
 
+    public BaumWelch(String[] seqArray, String type){
 
-    public BaumWelch(String[] seqArray, double[] start, double[][] transition, double[][] emission) {
+
+        double [] start = {.5, .25, .25};
+
+        double [][] transition = {
+                {.8, .1, .1},
+                {.5, .4, .1},
+                {.5, .1, .4}
+        };
+        this.numAlpha = 20;
+
+        double[][] emission = makeEmissionArray(start.length, numAlpha);
+
+
+
+        BaumWelch bw = new BaumWelch(seqArray, start, transition, emission, type);
+
+        this.start = bw.getStart();
+        this.transition = bw.getTransition();
+        this.emission = bw.getEmission();
+        this.type = type;
+
+
+    }
+
+
+    public BaumWelch(String[] seqArray, double[] start, double[][] transition, double[][] emission, String type) {
 
         //TODO: Work out which sequence length is needed
 
         this.numSeqs = seqArray.length;
         this.numStates = start.length;
-        this.numAlpha = emission.length;
+        this.numAlpha = 20;
         this.seqLength = seqArray[0].length();
+
+
+        this.start = start;
+        this.transition = transition;
+        this.emission = emission;
+
+        this.type = type;
 
         intArray = new int[numSeqs][seqLength];
 
@@ -60,7 +99,6 @@ public class BaumWelch {
 
 
         boolean converged = false;
-        int iteration = 0;
 
 
 
@@ -124,27 +162,105 @@ public class BaumWelch {
 
         // Convert sequences
 
-        for (int i=0; i < numSeqs; i++){
-            for (int j=0; j< seqLength; j++){
-                switch(seqArray[i].charAt(j)) {
-                    case 'A':
-                        intArray[i][j] = 0;
-                        break;
-                    case 'T':
-                        intArray[i][j] = 1;
-                        break;
-                    case 'C':
-                        intArray[i][j] = 2;
-                        break;
-                    case 'G':
-                        intArray[i][j] = 3;
-                        break;
+        if (type.equals("nucleotide")){
+
+            for (int i=0; i < numSeqs; i++){
+                for (int j=0; j< seqLength; j++){
+                    switch(seqArray[i].charAt(j)) {
+                        case 'A':
+                            intArray[i][j] = 0;
+                            break;
+                        case 'T':
+                            intArray[i][j] = 1;
+                            break;
+                        case 'C':
+                            intArray[i][j] = 2;
+                            break;
+                        case 'G':
+                            intArray[i][j] = 3;
+                            break;
+                    }
+                }
+            }
+
+        }
+
+        else if (type.equals("protein")) {
+
+
+            for (int i = 0; i < numSeqs; i++) {
+                for (int j = 0; j < seqLength; j++) {
+                    switch (seqArray[i].charAt(j)) {
+                        case 'A':
+                            intArray[i][j] = 0;
+                            break;
+                        case 'R':
+                            intArray[i][j] = 1;
+                            break;
+                        case 'N':
+                            intArray[i][j] = 2;
+                            break;
+                        case 'D':
+                            intArray[i][j] = 3;
+                            break;
+                        case 'C':
+                            intArray[i][j] = 4;
+                            break;
+                        case 'Q':
+                            intArray[i][j] = 5;
+                            break;
+                        case 'E':
+                            intArray[i][j] = 6;
+                            break;
+                        case 'G':
+                            intArray[i][j] = 7;
+                            break;
+                        case 'H':
+                            intArray[i][j] = 8;
+                            break;
+                        case 'I':
+                            intArray[i][j] = 9;
+                            break;
+                        case 'L':
+                            intArray[i][j] = 10;
+                            break;
+                        case 'K':
+                            intArray[i][j] = 11;
+                            break;
+                        case 'M':
+                            intArray[i][j] = 12;
+                            break;
+                        case 'F':
+                            intArray[i][j] = 13;
+                            break;
+                        case 'P':
+                            intArray[i][j] = 14;
+                            break;
+                        case 'S':
+                            intArray[i][j] = 15;
+                            break;
+                        case 'T':
+                            intArray[i][j] = 16;
+                            break;
+                        case 'W':
+                            intArray[i][j] = 17;
+                            break;
+                        case 'Y':
+                            intArray[i][j] = 18;
+                            break;
+                        case 'V':
+                            intArray[i][j] = 19;
+                            break;
+                    }
                 }
             }
         }
 
+
+
+
         // Compute recurrance
-        while (converged == false){
+        while (!converged){
             double [] startR = new double [3];
             double [][] transitionR = new double [numStates][numStates];
             double [][] emissionR = new double [numStates][numAlpha];
@@ -176,9 +292,9 @@ public class BaumWelch {
                     }
                 }
 
-                // Calcualte the forward and backwards values
-                fValue = forward (n, f, start, transition, emission, fValue);
-                bValue = backward(n, b, start, transition, emission, bValue);
+                // Calculate the forward and backwards values
+                fValue = forward (n, f, start, transition, emission);
+                bValue = backward(n, b, start, transition, emission);
 
 
                 //Update start matrix
@@ -220,12 +336,15 @@ public class BaumWelch {
             }
 
             // Update transition
-            transitionDiff = 0;
-            emissionDiff = 0;
+            transitionDiff = 0.0;
+            emissionDiff = 0.0;
+
 
 
             List<Object> updatedTransitionValues = getUpdatedValues(transition, transitionR, numStates, transitionDiff);
             List<Object> updatedEmissionValues = getUpdatedValues(emission, emissionR, numAlpha, emissionDiff);
+
+
 
             transition = (double[][]) updatedTransitionValues.get(0);
             transitionDiff = (Double) updatedTransitionValues.get(1);
@@ -239,11 +358,12 @@ public class BaumWelch {
             if (startDiff + transitionDiff + emissionDiff < 0.000000000001) {
                 converged = true;
             }
-            iteration++;
+
+            this.start = start;
+            this.transition = transition;
+            this.emission = emission;
 
         }
-
-        System.out.println("Done");
 
 
 
@@ -256,11 +376,10 @@ public class BaumWelch {
      * @param start Array of starting state probabilities
      * @param transition Array of transition probabilities
      * @param emission Array of emission probabilities
-     * @param fValue Forward probability
      * @return Double representing the updated forward probability
      */
 
-    double forward (int n, double [][] f, double [] start, double[][] transition, double [][] emission, double fValue){
+    double forward (int n, double [][] f, double [] start, double[][] transition, double [][] emission){
         fValue = 0;
         for(int i=0; i < numStates; i++){
             f[i][0] = start[i] * emission[i][intArray[n][0]];
@@ -289,11 +408,10 @@ public class BaumWelch {
      * @param start Array of starting state probabilities
      * @param transition Array of transition probabilities
      * @param emission Array of emission probabilities
-     * @param bValue Backwards probability
      * @return Double representing the updated backward probability
      */
 
-    double backward (int n, double [][] b, double [] start, double[][] transition, double [][] emission, double bValue){
+    double backward (int n, double [][] b, double [] start, double[][] transition, double [][] emission){
 
         bValue = 0;
         for(int i=0; i< numStates; i++){
@@ -315,7 +433,15 @@ public class BaumWelch {
         return bValue;
     }
 
-    public List<Object> getUpdatedValues(double[][] currentMatrix, double[][] updatedMatrix, int length, double diff){
+    /**
+     * Updates the current matrix and returns the updated matrix and the difference between the two matrices
+     * @param currentMatrix The current matrix to update
+     * @param updatedMatrix The newer matrix to update
+     * @param length
+     * @param diff
+     * @return
+     */
+    public List<Object> getUpdatedValues(double[][] currentMatrix, double[][] updatedMatrix, int length, Double diff){
         for (int i = 0; i < numStates; i++){
             double sum = 0;
             for (int j = 0; j< length; j++){
@@ -329,15 +455,51 @@ public class BaumWelch {
             }
         }
 
+
         List<Object> updatedValues = new ArrayList<Object>();
         updatedValues.add(currentMatrix);
         updatedValues.add(diff);
-
-
-
-
-
         return updatedValues;
+    }
+
+    /**
+     * Construct a generic emission array with uniform emission probabilities for each character in each state
+     * @param states The number of states in the model
+     * @param characters The number of characters in the model
+     * @return Double array of emission probabilities
+     */
+    public double[][] makeEmissionArray(int states, int characters){
+
+        double [][] emissionArray = new double[states][characters];
+
+        for (double[] array : emissionArray){
+            Arrays.fill(array, 1.0 / characters);
+
+        }
+
+        return emissionArray;
+
+    }
+
+    /**
+     * @return Array of doubles representing start probabilities
+     */
+    public double[] getStart(){
+        return this.start;
+    }
+
+    /**
+     * @return Array of doubles representing transition probabilities
+     */
+    public double[][] getTransition(){
+        return this.transition;
+    }
+
+    /**
+     * @return Array of doubles representing emission probabilities
+     */
+    public double[][] getEmission(){
+        return this.emission;
     }
 
 

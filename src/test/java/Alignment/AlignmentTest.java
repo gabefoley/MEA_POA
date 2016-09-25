@@ -1,6 +1,6 @@
 package Alignment;
 
-import SubstitutionModels.Blosum62Probs;
+import SubstitutionModels.SubstitutionMatrix;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -18,6 +18,8 @@ public class AlignmentTest {
 //    private HashProfile fourth;
 //    private HashProfile firstJoined;
 //    private HashProfile secondJoined;
+
+    private SubstitutionMatrix blosum62 = new SubstitutionMatrix("blosum62");
 
 
 
@@ -42,7 +44,7 @@ public class AlignmentTest {
         HashProfile fourth = new HashProfile("-WWG");
 
         HashProfile firstJoined = new HashProfile(first, second);
-        HashProfile secondJoined = new HashProfile(third, fourth);        Alignment firstAlignment = new Alignment(first, second, -2, -1, Blosum62Probs.getMatrix(), false);
+        HashProfile secondJoined = new HashProfile(third, fourth);        Alignment firstAlignment = new Alignment(first, second, -2, -1, blosum62, false);
 
 
     }
@@ -55,7 +57,7 @@ public class AlignmentTest {
         HashProfile fourth = new HashProfile("-WWG");
 
         HashProfile firstJoined = new HashProfile(first, second);
-        HashProfile secondJoined = new HashProfile(third, fourth);        Alignment secondAlignment = new Alignment(third, fourth, -2, -1, Blosum62Probs.getMatrix(), false);
+        HashProfile secondJoined = new HashProfile(third, fourth);        Alignment secondAlignment = new Alignment(third, fourth, -2, -1, blosum62, false);
     }
 
 
@@ -69,7 +71,7 @@ public class AlignmentTest {
 
         HashProfile firstJoined = new HashProfile(first, second);
         HashProfile secondJoined = new HashProfile(third, fourth);
-        Alignment joinedAlignment = new Alignment(secondJoined, firstJoined, -2, -1, Blosum62Probs.getMatrix(), false);
+        Alignment joinedAlignment = new Alignment(secondJoined, firstJoined, -2, -1, blosum62, false);
 
         ArrayList<Integer> expectedStringMatches = new ArrayList<Integer>();
         expectedStringMatches.add(0);
@@ -102,7 +104,7 @@ public class AlignmentTest {
 
         HashProfile firstJoined = new HashProfile(first, second);
         HashProfile secondJoined = new HashProfile(third, fourth);
-        Alignment joinedAlignment = new Alignment(first, second, -2, -1, Blosum62Probs.getMatrix(), false);
+        Alignment joinedAlignment = new Alignment(first, second, -2, -1, blosum62, false);
 
 
 

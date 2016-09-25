@@ -1,6 +1,6 @@
 package Alignment;
 
-import SubstitutionModels.Blosum62Probs;
+import SubstitutionModels.SubstitutionMatrix;
 import org.biojava.nbio.alignment.Alignments;
 import org.biojava.nbio.alignment.SimpleGapPenalty;
 import org.biojava.nbio.alignment.template.GapPenalty;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by gabe on 23/08/2016.
+ * Helper method to test running alignments
  */
 public class RunAlignments {
 
@@ -26,15 +26,16 @@ public class RunAlignments {
 
 
         // Setup pairwise inputs
-        String pairwiseQuery = "AACT";
-        String pairwiseTarget = "CT";
+//        String pairwiseQuery = "TTACG";
+//        String pairwiseTarget = "TAG";
 
 
-//        String pairwiseQuery = "PPGKRNDTG";
-//        String pairwiseTarget = "PPGNDTT";
+        String pairwiseQuery = "PPGKRNDTGGTK";
+        String pairwiseTarget = "PPGKRTTAAWERAGTKK";
 
-//        String pairwiseQuery = "AAGPWRDDFP";
-//        String pairwiseTarget = "AARDFT";
+        HashProfile profile1 = new HashProfile(pairwiseQuery);
+        HashProfile profile2 = new HashProfile(pairwiseTarget);
+
 
 
         int gapOpen = 2;
@@ -48,29 +49,12 @@ public class RunAlignments {
         //Setup MSA inputs
         int multiGapOpen = -10;
         int multiGapExtend = -1;
-//
-//        String multiSeq1 = "AATG";
-//        String multiSeq2 = "TTG";
-//        String multiSeq3 = "PTG";
-//        String multiSeq4 = "CCG";
-
-        // Elongation issue with MEA / Viterbi
-//        String multiSeq1 = "CAACCAGGCATG";
-//        String multiSeq2 = "CAATTG";
-//        String multiSeq3 = "ACTTCACTG";
-//        String multiSeq4 = "CTTCG";
 
 
-        // Elongation issue with MEA / Viterbi
-//        String multiSeq1 = "CCAGCTAG";
-//        String multiSeq2 = "AGCC";
-//        String multiSeq3 = "CTGGGA";
-//        String multiSeq4 = "ATGA";
-
-        String multiSeq1 = "GMKKWPR";
+        String multiSeq1 = "GMKKWPRDCC";
         String multiSeq2 = "WPGMSVTNDC";
-        String multiSeq3 = "NAREERED";
-        String multiSeq4 = "DDPGA";
+        String multiSeq3 = "NAREEREDCA";
+        String multiSeq4 = "DDPGAEERED";
 
 
 //        String multiSeq1 = "GKGDPKKPRGKMSSYAFFVQTSREEHKKKHPDASVNFSEFSKKCSERWKTMSAKEKGKFEDMAKADKARYEREMKTYIPPKGEKKKKKKKKK";
@@ -80,21 +64,46 @@ public class RunAlignments {
 
 
 
+        SubstitutionMatrix blosum62 = new SubstitutionMatrix("blosum62");
+        SubstitutionMatrix blosum62Probs = new SubstitutionMatrix("blosum62Probs");
+//        SubstitutionMatrix exampleModel = new SubstitutionMatrix("exampleModel");
 
         // Run pairwise alignments
-//        runBioJavaPairwise(pairwiseQuery, pairwiseTarget, gapOpen, gapExtend);
-        runPairwise(pairwiseQuery, pairwiseTarget, gapOpen, gapExtend);
-//        runViterbiPairwiseOnProfile(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
-//        runMEAPairwiseOnProfile(pairwiseQuery, pairwiseTarget, tau, epsilon, delta);
+        runBioJavaPairwise(pairwiseQuery, pairwiseTarget, gapOpen, gapExtend);
+        runPairwise(profile1, profile2, gapOpen, gapExtend, blosum62);
+        runViterbiPairwiseOnProfile(profile1, profile2, tau, epsilon, delta, blosum62Probs);
+        runMEAPairwiseOnProfile(pairwiseQuery, pairwiseTarget, tau, epsilon, delta, blosum62Probs);
 
 
         // Run multiple sequence alignments
-//        runBioJavaMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
-//        runMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
-//        runViterbiMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta);
-//        runMEAMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta);
+        runBioJavaMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend);
+        runMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, multiGapOpen, multiGapExtend, blosum62);
+        runViterbiMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta, blosum62Probs);
+        runMEAMSA(multiSeq1, multiSeq2, multiSeq3, multiSeq4, tau, epsilon, delta, blosum62Probs);
 
-        // Run Baum Welch test
+        // Run Baum Welch
+        runBaumWelch();
+        runBWDefaults(multiSeq1, multiSeq2, multiSeq3, multiSeq4, blosum62Probs);
+
+
+
+
+
+
+    }
+
+    private static void runBaumWelch(){
+        double [] start = {.3, .7};
+
+        double [][] transition = {
+                {.5, .5},
+                {.4, .6},
+        };
+
+        double [][] emission = {
+                {.2, .8 },
+                {.9, .1},
+        };
 
         String [] seqArray = {
                 "AA",
@@ -108,21 +117,36 @@ public class RunAlignments {
                 "AA"
         };
 
-        double [] start = {.3, .7};
+        BaumWelch bw = new BaumWelch(seqArray, start, transition, emission, "nucleotide");
 
-        double [][] transition = {
-                {.5, .5},
-                {.4, .6},
-        };
-
-        double [][] emission = {
-                {.2, .8 },
-                {.9, .1},
-        };
-        BaumWelch bw = new BaumWelch(seqArray, start, transition, emission);
         System.out.println(bw);
 
+    }
 
+    private static void runBWDefaults(String multiSeq1, String multiSeq2, String multiSeq3, String multiSeq4, SubstitutionMatrix subMatrix){
+        String[] seqArray = new String[4];
+        seqArray[0] = multiSeq1;
+        seqArray[1] = multiSeq2;
+        seqArray[2] = multiSeq3;
+        seqArray[3] = multiSeq4;
+
+
+        BaumWelch bw = new BaumWelch(seqArray, "protein");
+
+        double[] start = bw.getStart();
+        double[][] transition = bw.getTransition();
+        double[][] emission = bw.getEmission();
+
+
+
+
+
+        HashProfile first = new HashProfile(multiSeq1);
+        HashProfile second = new HashProfile(multiSeq2);
+
+        PairHMM bwPairHMM = new PairHMM(first, second, start, transition, emission, subMatrix);
+
+        System.out.println(bwPairHMM);
     }
 
     private static void runBioJavaPairwise(String pairwiseQuery, String pairwiseTarget, int gapOpen, int gapExtend)
@@ -148,14 +172,13 @@ public class RunAlignments {
 
     }
 
-    private static void runPairwise(String pairwiseQuery, String pairwiseTarget, int gapOpen, int gapExtend){
+    private static void runPairwise(HashProfile pairwiseQuery, HashProfile pairwiseTarget, int gapOpen, int gapExtend, SubstitutionMatrix subMatrix){
         System.out.println("--------------------------");
         System.out.println("NW Alignment: ");
 
 
-        //TODO: Fix up selecting substitution matrix
         Alignment alignment = new Alignment(pairwiseQuery, pairwiseTarget,
-                -1 * gapOpen, -1 * gapExtend, Blosum62Probs.getMatrix(), false);
+                -1 * gapOpen, -1 * gapExtend, subMatrix, false);
 
         System.out.println(alignment.getUpdatedProfile());
 
@@ -166,31 +189,27 @@ public class RunAlignments {
 
 
 
-    private static void runViterbiPairwiseOnProfile(String pairwiseQuery, String pairwiseTarget, double tau, double epsilon,
-                                           double delta){
+    private static void runViterbiPairwiseOnProfile(HashProfile pairwiseQuery, HashProfile pairwiseTarget, double tau, double epsilon,
+                                           double delta, SubstitutionMatrix subMatrix){
         System.out.println("--------------------------");
         System.out.println("\nViterbi Pairwise using PairHMM: ");
 
-        //TODO: Handle this in the constructor
-        HashProfile profile1 = new HashProfile(pairwiseQuery);
-        HashProfile profile2 = new HashProfile(pairwiseTarget);
 
-        PairHMM pairHMM = new PairHMM(profile1, profile2, tau, epsilon, delta);
-        HashProfile alignment = pairHMM.getViterbiAlignmnet();
+
+        PairHMM pairHMM = new PairHMM(pairwiseQuery, pairwiseTarget, tau, epsilon, delta, subMatrix);
+        HashProfile alignment = pairHMM.getViterbiAlignment();
         System.out.println(alignment);
 
     }
 
     private static void runMEAPairwiseOnProfile(String pairwiseQuery, String pairwiseTarget, double tau, double epsilon,
-                                       double delta ){
+                                       double delta, SubstitutionMatrix subMatrix ){
         System.out.println("--------------------------");
         System.out.println("\nMaximum Expected Accuracy Alignment using PairHMM: ");
 
-        //TODO: Handle this in the constructor
-        HashProfile profile1 = new HashProfile(pairwiseQuery);
-        HashProfile profile2 = new HashProfile(pairwiseTarget);
 
-        PairHMM pairHMM = new PairHMM(profile1, profile2, tau, epsilon, delta);
+
+        PairHMM pairHMM = new PairHMM(pairwiseQuery, pairwiseTarget, tau, epsilon, delta, subMatrix);
         HashProfile alignment = pairHMM.getMEAAlignment();
 
         System.out.println(alignment);
@@ -207,14 +226,13 @@ public class RunAlignments {
     private static void runBioJavaMSA(String multiSeq1, String multiSeq2, String multiSeq3, String multiSeq4,
                                       int multiGapOpen, int multiGapExtend) throws CompoundNotFoundException {
         System.out.println("--------------------------");
-        System.out.println("\nBioJava Multiple Sequence Alignment: ");
+        System.out.println("\nBioJava Multiple Sequences Alignment: ");
 
         ProteinSequence firstProt = new ProteinSequence(multiSeq1, AminoAcidCompoundSet.getAminoAcidCompoundSet());
         ProteinSequence secondProt = new ProteinSequence(multiSeq2, AminoAcidCompoundSet.getAminoAcidCompoundSet());
         ProteinSequence thirdProt = new ProteinSequence(multiSeq3, AminoAcidCompoundSet.getAminoAcidCompoundSet());
         ProteinSequence fourthProt = new ProteinSequence(multiSeq4, AminoAcidCompoundSet.getAminoAcidCompoundSet());
 
-        //TODO: Get this penalty value calling correctly
         GapPenalty penalty = new SimpleGapPenalty(multiGapOpen,multiGapExtend);
 
 //        Alignments.getMultipleSequenceAlignment()
@@ -241,9 +259,9 @@ public class RunAlignments {
     }
 
     private static void runMSA(String multiSeq1, String multiSeq2, String multiSeq3, String multiSeq4,
-                               int multiGapOpen, int multiGapExtend){
+                               int multiGapOpen, int multiGapExtend, SubstitutionMatrix subMatrix){
         System.out.println("--------------------------");
-        System.out.println("\nMultiple Sequence Alignment: ");
+        System.out.println("\nMultiple Sequences Alignment: ");
         HashProfile first = new HashProfile(multiSeq1);
         HashProfile second = new HashProfile(multiSeq2);
         HashProfile third = new HashProfile(multiSeq3);
@@ -253,7 +271,7 @@ public class RunAlignments {
 
 
         System.out.println("\nFirst alignment:");
-        Alignment firstAlignment = new Alignment(first, second, multiGapOpen, multiGapExtend, Blosum62Probs.getMatrix(), false);
+        Alignment firstAlignment = new Alignment(first, second, multiGapOpen, multiGapExtend, subMatrix, false);
         HashProfile firstProfile = firstAlignment.getUpdatedProfile();
 
         System.out.println(firstProfile);
@@ -261,15 +279,15 @@ public class RunAlignments {
         System.out.println("\nSecond alignment:");
 
 
-        Alignment secondAlignment = new Alignment(firstProfile, third, multiGapOpen, multiGapExtend, Blosum62Probs.getMatrix(), false);
+        Alignment secondAlignment = new Alignment(firstProfile, third, multiGapOpen, multiGapExtend,  subMatrix, false);
         HashProfile secondProfile = secondAlignment.getUpdatedProfile();
         System.out.println(secondProfile);
 
 
         System.out.println("\nThird alignment:");
 
-        Alignment thirdAlignment = new Alignment(secondProfile, fourth, multiGapOpen, multiGapExtend, Blosum62Probs.getMatrix(), false);
-        HashProfile thirdProfile = secondAlignment.getUpdatedProfile();
+        Alignment thirdAlignment = new Alignment(secondProfile, fourth, multiGapOpen, multiGapExtend,  subMatrix, false);
+        HashProfile thirdProfile = thirdAlignment.getUpdatedProfile();
 
         System.out.println(thirdProfile);
 
@@ -277,9 +295,7 @@ public class RunAlignments {
 
 
     private static void runViterbiMSA(String multiSeq1, String multiSeq2, String multiSeq3, String multiSeq4, double tau, double epsilon,
-                                      double delta){
-        System.out.println("--------------------------");
-        System.out.println("\nViterbi Multiple Sequence Alignment: ");
+                                      double delta, SubstitutionMatrix subMatrix){
 
         HashProfile first = new HashProfile(multiSeq1);
         HashProfile second = new HashProfile(multiSeq2);
@@ -287,34 +303,37 @@ public class RunAlignments {
         HashProfile fourth = new HashProfile(multiSeq4);
 
 
+        System.out.println("--------------------------");
+        System.out.println("\nViterbi Multiple Sequences Alignment: ");
+
 
 
         System.out.println("\nFirst alignment:");
-        PairHMM firstAlignment = new PairHMM(first, second, tau, epsilon, delta);
-        HashProfile firstProfile = firstAlignment.getViterbiAlignmnet();
+        PairHMM firstAlignment = new PairHMM(first, second, tau, epsilon, delta, subMatrix);
+        HashProfile firstProfile = firstAlignment.getViterbiAlignment();
         System.out.println(firstProfile);
 
         System.out.println("\nSecond alignment:");
 
 
-        PairHMM secondAlignment = new PairHMM(firstProfile, third, tau, epsilon, delta);
-        HashProfile secondProfile = secondAlignment.getViterbiAlignmnet();
+        PairHMM secondAlignment = new PairHMM(firstProfile, third, tau, epsilon, delta, subMatrix);
+        HashProfile secondProfile = secondAlignment.getViterbiAlignment();
         System.out.println(secondProfile);
 
 
         System.out.println("\nThird alignment:");
 
-        PairHMM thirdAlignment = new PairHMM(secondProfile, fourth, tau, epsilon, delta);
-        HashProfile thirdProfile = thirdAlignment.getViterbiAlignmnet();
+        PairHMM thirdAlignment = new PairHMM(secondProfile, fourth, tau, epsilon, delta, subMatrix);
+        HashProfile thirdProfile = thirdAlignment.getViterbiAlignment();
         System.out.println(thirdProfile);
 
     }
 
 
     private static void runMEAMSA(String multiSeq1, String multiSeq2, String multiSeq3, String multiSeq4, double tau, double epsilon,
-                                  double delta){
+                                  double delta, SubstitutionMatrix subMatrix){
         System.out.println("--------------------------");
-        System.out.println("\nMaximum Expected Accuracy Multiple Sequence Alignment: ");
+        System.out.println("\nMaximum Expected Accuracy Multiple Sequences Alignment: ");
 
         HashProfile first = new HashProfile(multiSeq1);
         HashProfile second = new HashProfile(multiSeq2);
@@ -322,21 +341,21 @@ public class RunAlignments {
         HashProfile fourth = new HashProfile(multiSeq4);
 
         System.out.println("\nFirst alignment:");
-        PairHMM firstAlignment = new PairHMM(first, second, tau, epsilon, delta);
+        PairHMM firstAlignment = new PairHMM(first, second, tau, epsilon, delta, subMatrix);
         HashProfile firstProfile = firstAlignment.getMEAAlignment();
         System.out.println(firstProfile);
 
         System.out.println("\nSecond alignment:");
 
 
-        PairHMM secondAlignment = new PairHMM(firstProfile, third, tau, epsilon, delta);
+        PairHMM secondAlignment = new PairHMM(firstProfile, third, tau, epsilon, delta, subMatrix);
         HashProfile secondProfile = secondAlignment.getMEAAlignment();
         System.out.println(secondProfile);
 
 
         System.out.println("\nThird alignment:");
 
-        PairHMM thirdAlignment = new PairHMM(secondProfile, fourth, tau, epsilon, delta);
+        PairHMM thirdAlignment = new PairHMM(secondProfile, fourth, tau, epsilon, delta, subMatrix);
         HashProfile thirdProfile = thirdAlignment.getMEAAlignment();
         System.out.println(thirdProfile);
 

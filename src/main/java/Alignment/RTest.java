@@ -6,6 +6,8 @@ package Alignment;
 
 import org.rosuda.JRI.*;
 
+import java.util.ArrayList;
+
 public class RTest {
     public static void main(String a[]) {
 
@@ -27,14 +29,53 @@ public class RTest {
 //        //Print output values
 //        System.out.println("Mean of given vector is=" + mean);
 
+        ArrayList<String> seqs = new ArrayList<String>();
+        ArrayList<Double> scores = new ArrayList<Double>();
+
+        seqs.add("BB40019");
+        seqs.add("BB40020");
+        seqs.add("BB40021");
+
+        scores.add(.57);
+        scores.add(.21);
+        scores.add(.03);
+
+        String seqString = "c(";
+
+        for (String seq: seqs){
+            seqString += "'" + seq + "',";
+        }
+
+        seqString = seqString.substring(0, seqString.lastIndexOf(","));
+
+        seqString += ")";
+
+        String scoreString = "c(";
+
+        for (Double score: scores){
+            scoreString += score + ",";
+        }
+
+        scoreString = scoreString.substring(0, scoreString.lastIndexOf(","));
+
+        scoreString += ")";
+
+        System.out.println(seqString);
+        System.out.println(scoreString);
+
+
+
+
+
+
         Rengine engine = new Rengine(new String[] { "--no-save"}, false, null);
 
         engine.eval("require(ggplot2)");
-        engine.eval("Seqs <- c(100, 200, 300, 400)");
-        engine.eval("Time <- c(2, 4, 16, 25)");
-        engine.eval("joined <- data.frame(Seqs, Time)");
-        engine.eval("plot <- ggplot(data=joined, aes(x=Seqs, y=Time, group=1)) + geom_line()");
-        engine.eval("ggsave('/Users/gabe/Dropbox/java.png', plot)");
+        engine.eval("Seqs <-" + seqString);
+        engine.eval("Scores <-" + scoreString);
+        engine.eval("joined <- data.frame(Seqs, Scores)");
+        engine.eval("plot <- ggplot(data=joined, aes(x=Seqs, y=Scores, group=1)) + geom_line()");
+        engine.eval("ggsave('/Users/gabe/Dropbox/scores.png', plot)");
         System.out.println("Done");
 
 

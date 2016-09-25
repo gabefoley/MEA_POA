@@ -1,8 +1,6 @@
 package Alignment;
 
-import sun.java2d.pipe.SpanShapeRenderer;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +22,7 @@ public class HashProfile {
 
     /**
      * Constructor if using a single sequence
-     * @param seq1 Sequence to build the profile from
+     * @param seq1 String representing sequence to build the profile from
      */
     public HashProfile(String seq1){
 
@@ -41,19 +39,19 @@ public class HashProfile {
         fillProfileArray(seq1);
     }
 
-    /**
-     * Constructor if adding a sequence to a profile
-     * @param profile The existing profile
-     * @param seq The sequence to add to the profile
-     */
-    public HashProfile(HashProfile profile, String seq){
-
-        this.profileArray = profile.getProfileArray();
-        this.sequences = profile.getSequences();
-        this.sequences.add(seq);
-        fillProfileArray(seq);
-
-    }
+//    /**
+//     * Constructor if adding a sequence to a profile
+//     * @param profile The existing profile
+//     * @param seq The sequence to add to the profile
+//     */
+//    public HashProfile(HashProfile profile, String seq){
+//
+//        this.profileArray = profile.getProfileArray();
+//        this.sequences = profile.getSequences();
+//        this.sequences.add(seq);
+//        fillProfileArray(seq);
+//
+//    }
 
     /**
      *  Constructor if joining two profiles together
@@ -62,7 +60,6 @@ public class HashProfile {
      */
 
     public HashProfile(HashProfile profile1, HashProfile profile2){
-        List<Map<Character,MutableInt>> newprofileArray = profile1.getProfileArray();
         this.profileArray = profile1.getProfileArray();
         this.sequences = profile1.getSequences();
         for (String seq: profile2.getSequences()){
@@ -72,12 +69,13 @@ public class HashProfile {
 
     }
 
-
+    /**
+     * Add the residues in a single sequence to profileArray
+     * @param seq The sequence to add to profileArray
+     */
     public void fillProfileArray(String seq){
 
-
         for (int i = 0; i < seq.length(); i++) {
-//            if (!(seq.charAt(i) == ('-'))) {
                 MutableInt count = profileArray.get(i).get(seq.charAt(i));
 
                 if (count == null) {
@@ -87,14 +85,16 @@ public class HashProfile {
                     count.increment();
                 }
             }
-//        }
 
     }
 
+    /**
+     * Add the residues in a profile to profileArray
+     * @param profile The profile to add to profileArray
+     */
     public void fillProfileArray(HashProfile profile){
         for (int i = 0; i < profile.profileArray.size(); i++) {
             for (Character residue : profile.getProfileArray().get(i).keySet()) {
-//                if (!residue.equals("-")) {
                     MutableInt count = profileArray.get(i).get(residue);
                     if (count == null) {
                         profileArray.get(i).put(residue, new MutableInt());
@@ -104,13 +104,14 @@ public class HashProfile {
                     }
                 }
             }
-//        }
-
     }
 
+    /**
+     * Update a HashProfile to contain gaps
+     * @param gapPos The positions of the gaps to update the HashProfile with
+     */
     public void addGaps(List<Integer> gapPos){
 
-        //TODO: Don't remove and recreate profileArray everytime we add gaps
         this.profileArray = new ArrayList<Map<Character,MutableInt>>();
 
         for (int i = 0; i < this.getSequences().size(); i++){
@@ -145,11 +146,12 @@ public class HashProfile {
      * @return String representing the characters at the chosen column
      */
     public String getColumn(int pos){
+
         String columnList = "";
         for (String seq: this.getSequences()){
 
-            if (pos <= seq.length()) {
-                columnList += seq.charAt(pos);
+            if (pos < seq.length()) {
+                 columnList += seq.charAt(pos);
             }
             else {
                 columnList += "X";
@@ -187,18 +189,17 @@ public class HashProfile {
 
     }
 
-    public void printProfileArray(){
-
-        for (int i = 0; i < profileArray.size(); i++){
-            for (Character name: profileArray.get(i).keySet()){
-                String key = name.toString();
-                String value = profileArray.get(i).get(name).toString();
-                String map = profileArray.get(i).toString();
-                System.out.println("Column " + i + " Residue: " + key + " Count: " + value );
-
-            }
-        }
-    }
+//    public void printProfileArray(){
+//
+//        for (int i = 0; i < profileArray.size(); i++){
+//            for (Character name: profileArray.get(i).keySet()){
+//                String key = name.toString();
+//                String value = profileArray.get(i).get(name).toString();
+//                System.out.println("Column " + i + " Residue: " + key + " Count: " + value );
+//
+//            }
+//        }
+//    }
 
 
 
