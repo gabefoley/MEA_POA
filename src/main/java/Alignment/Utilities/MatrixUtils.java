@@ -11,7 +11,6 @@ public class MatrixUtils {
 
 
     public static void printMatrix(double[][] matrix) {
-
         for (double[] aMatrix : matrix) {
             for (int j = 0; j < matrix[0].length; j++) {
                 System.out.print(String.format("  %-10s", aMatrix[j]) + "|");
@@ -25,12 +24,10 @@ public class MatrixUtils {
     }
 
     public static void printMatrix2(double[][] matrix) {
-        NumberFormat formatter = new DecimalFormat();
-        formatter = new DecimalFormat("0.#####E0");
-
-        for (int i = 0; i < matrix.length; i++) {
+        NumberFormat formatter = new DecimalFormat("0.#####E0");
+        for (double[] aMatrix : matrix) {
             for (int j = 0; j < matrix[0].length; j++) {
-                System.out.print(String.format("  %-10s", formatter.format(matrix[i][j])) + "|");
+                System.out.print(String.format("  %-10s", formatter.format(aMatrix[j])) + "|");
             }
             System.out.println();
 
@@ -42,9 +39,7 @@ public class MatrixUtils {
 
 
     public static void printMatrix(int[][] matrix) {
-        NumberFormat formatter = new DecimalFormat();
-        formatter = new DecimalFormat("0.#####E0");
-
+        NumberFormat formatter = new DecimalFormat("0.#####E0");
         for (int[] aMatrix : matrix) {
             for (int j = 0; j < matrix[0].length; j++) {
                 System.out.print(String.format("  %-10s", formatter.format(aMatrix[j])) + "|");
@@ -82,7 +77,6 @@ public class MatrixUtils {
      * @return int array with the add
      */
 
-    //TODO: Move this helper method to the matrix helper methods
     public static double[] addArrays(double[] firstArray, double[] secondArray) {
 
         double[] shorterArray = (firstArray.length < secondArray.length ? firstArray : secondArray);
@@ -93,10 +87,56 @@ public class MatrixUtils {
         for (int i = 0; i < shorterArray.length; i++) {
             finalArray[i] = (firstArray[i] + secondArray[i]);
         }
-        for (int i = shorterArray.length; i < longerArray.length; i++) {
-            finalArray[i] = longerArray[i];
-        }
+        System.arraycopy(longerArray, shorterArray.length, finalArray, shorterArray.length, longerArray.length - shorterArray.length);
         return finalArray;
+    }
+    
+    public static int returnIndex(Character character){
+        
+        switch (character) {
+            case 'A':
+               return 0;
+            case 'R':
+               return 1;
+            case 'N':
+               return 2;
+            case 'D':
+               return 3;
+            case 'C':
+               return 4;
+            case 'Q':
+               return 5;
+            case 'E':
+               return 6;
+            case 'G':
+               return 7;
+            case 'H':
+               return 8;
+            case 'I':
+               return 9;
+            case 'L':
+               return 10;
+            case 'K':
+               return 11;
+            case 'M':
+               return 12;
+            case 'F':
+               return 13;
+            case 'P':
+               return 14;
+            case 'S':
+               return 15;
+            case 'T':
+               return 16;
+            case 'W':
+               return 17;
+            case 'Y':
+               return 18;
+            case 'V':
+               return 19;
+            default:
+                return -1;
+        }
     }
 
 

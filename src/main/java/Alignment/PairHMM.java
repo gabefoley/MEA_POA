@@ -1,5 +1,6 @@
 package Alignment;
 
+import Alignment.Utilities.MatrixUtils;
 import SubstitutionModels.SubstitutionMatrix;
 
 
@@ -18,17 +19,22 @@ public class PairHMM {
     private double[][] vX;
     private double[][] vY;
     private String[][] tracebackM, tracebackX, tracebackY;
+    private double[][] emissions;
+    private double emissionX;
+    private double emissionY;
 //    private double forwardProb, backwardProb;
 
     private SubstitutionMatrix subMatrix;
     private double tau;
 
-    public PairHMM(String seq1, String seq2, double tau, double epsilon, double delta, SubstitutionMatrix subMatrix) {
+    public PairHMM(String seq1, String seq2, double tau, double epsilon, double delta, double emissionX, double emissionY, SubstitutionMatrix subMatrix) {
 
-        this(new HashProfile(seq1), new HashProfile(seq2), tau, epsilon, delta, subMatrix);
+        this(new HashProfile(seq1), new HashProfile(seq2), tau, epsilon, delta, emissionX, emissionY, subMatrix);
     }
 
-    public PairHMM(HashProfile profile1, HashProfile profile2, double[] start, double[][] transition, double[][] emission, SubstitutionMatrix subMatrix){
+    public PairHMM(HashProfile profile1, HashProfile profile2, double[] start, double[][] transition, double[][] emission, SubstitutionMatrix subMatrix, boolean runBaumWelch){
+
+
         this.profile1 = profile1;
         this.profile2 = profile2;
 
@@ -45,8 +51,64 @@ public class PairHMM {
 
     }
 
+    public PairHMM(String [] seqArray, double[] start, double[][]transition, double[][]emission, SubstitutionMatrix subMatrix){
 
-    public PairHMM(HashProfile profile1, HashProfile profile2, double tau, double epsilon, double delta, SubstitutionMatrix subMatrix) {
+        BaumWelch bw = new BaumWelch(seqArray, start, transition, emission, "protein");
+        profile1 = new HashProfile(seqArray[0]);
+        profile2 = new HashProfile(seqArray[1]);
+
+//        PairHMM bwPairHMM = new PairHMM(profile1, profile2, bw.getStart(), bw.getTransition(), bw.getEmission(), subMatrix, false);
+
+
+    }
+
+    public PairHMM(String[] seqArray, SubstitutionMatrix subMatrix, String type){
+        BaumWelch bw = new BaumWelch(seqArray, type);
+
+        for (double value: bw.getStart()){
+            System.out.println(value);
+
+        }
+        MatrixUtils.printMatrix(bw.getEmission());
+        MatrixUtils.printMatrix(bw.getTransition());;
+        profile1 = new HashProfile(seqArray[0]);
+        profile2 = new HashProfile(seqArray[1]);
+
+        this.subMatrix = subMatrix;
+
+        double[] start = bw.getStart();
+        double[][] transition = bw.getTransition();
+        emissions = bw.getEmission();
+
+        this.transitionMM = transition[0][0];
+        this.transitionMX = transition[0][1];
+        this.transitionMY = transition[0][2];
+        this.transitionXM = transition[1][0];
+        this.transitionXX = transition[1][1];
+        this.transitionYM = transition[2][0];
+        this.transitionYY = transition[2][2];
+
+        this.vM = new double[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
+        this.vX = new double[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
+        this.vY = new double[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
+
+        this.tracebackM = new String[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
+        this.tracebackX = new String[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
+        this.tracebackY = new String[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
+
+        vM[0][0] = 1;
+
+
+//        PairHMM bwPairHMM = new PairHMM(profile1, profile2, bw.getStart(), bw.getTransition(), bw.getEmission(), subMatrix, false);
+
+
+
+
+
+    }
+
+
+    public PairHMM(HashProfile profile1, HashProfile profile2, double tau, double epsilon, double delta, double emissionX, double emissionY, SubstitutionMatrix subMatrix) {
         this.tau = tau;
 
         this.profile1 = profile1;
@@ -58,6 +120,9 @@ public class PairHMM {
         this.transitionMX = this.transitionMY = delta;
         this.transitionXX = this.transitionYY = epsilon;
         this.transitionXM = this.transitionYM = 1 - epsilon - tau;
+
+        this.emissionX = emissionX;
+        this.emissionY = emissionY;
 
 
         this.vM = new double[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
@@ -71,8 +136,15 @@ public class PairHMM {
         vM[0][0] = 1;
     }
 
-    // Fill out the match matrix
-
+    /**
+     *
+     * @param i
+     * @param j
+     * @param vM
+     * @param vX
+     * @param vY
+     * @param tracebackM
+     */
     public void fillVM(int i, int j, double[][] vM, double[][] vX, double[][] vY, String[][] tracebackM) {
 
 
@@ -110,7 +182,14 @@ public class PairHMM {
 
     }
 
-
+    /**
+     *
+     * @param i
+     * @param j
+     * @param vM
+     * @param vX
+     * @param tracebackX
+     */
     // Fill out the gap in X matrix
     public void fillVX(int i, int j, double[][] vM, double[][] vX, String[][] tracebackX) {
 
@@ -118,8 +197,13 @@ public class PairHMM {
             return;
         }
 
-        //TODO: Remove magic number here and in similar places
-        double emissionX = 0.25;
+        if (emissions != null) {
+
+            for (Character character : profile1.getProfileArray().get(j - 1).keySet()) {
+                emissionX = emissions[1][MatrixUtils.returnIndex(character)];
+            }
+        }
+
 
 
 
@@ -139,7 +223,14 @@ public class PairHMM {
 
     }
 
-
+    /**
+     *
+     * @param i
+     * @param j
+     * @param vM
+     * @param vY
+     * @param tracebackY
+     */
     // Fill out the gap in Y matrix
     public  void fillVY(int i, int j, double[][] vM, double[][] vY, String[][] tracebackY) {
 
@@ -147,7 +238,14 @@ public class PairHMM {
             return;
         }
 
-        double emissionY = 0.25;
+        if (emissions != null) {
+
+            for (Character character : profile2.getProfileArray().get(i - 1).keySet()) {
+                emissionY = emissions[2][MatrixUtils.returnIndex(character)];
+            }
+        }
+
+//        double emissionY = 0.25;
 
         double currentTransitionYY = transitionYY * vY[i - 1][j];
         double currentTransitionMY = transitionMY * vM[i - 1][j];
@@ -164,6 +262,10 @@ public class PairHMM {
 
     }
 
+    /**
+     *
+     * @return
+     */
     public HashProfile traceback(){
 
 
@@ -254,39 +356,19 @@ public class PairHMM {
         }
 
 
-        //TODO: Make calling gaps a function
-        List<Integer> gapPos = new ArrayList<Integer>();
-        List<Integer> gapPos2 = new ArrayList<Integer>();
 
+        addGapsToProfiles(profile1Matches, profile2Matches);
 
-        for (int k = 0; k < profile1Matches.size(); k++){
-            if (profile1Matches.get(k) == -1){
-                gapPos.add(k);
-
-            }
-        }
-
-        for (int k = 0; k < profile2Matches.size(); k++){
-            if (profile2Matches.get(k) == -1){
-                gapPos2.add(k);
-            }
-
-        }
-
-        if (gapPos.size() > 0){
-            profile1.addGaps(gapPos);
-
-        }
-
-        if (gapPos2.size() > 0) {
-            profile2.addGaps(gapPos2);
-        }
 
         return new HashProfile(profile1, profile2);
 
 
     }
 
+    /**
+     *
+     * @return
+     */
     public double[][] forwardAlgorithm() {
 
         double[][] fM = new double[profile1.getProfileArray().size() + 1][profile2.getProfileArray().size() + 1];
@@ -312,6 +394,14 @@ public class PairHMM {
         return fM;
     }
 
+    /**
+     *
+     * @param i
+     * @param j
+     * @param fM
+     * @param fX
+     * @param fY
+     */
     public void sumfM(int i, int j, double[][] fM, double[][]fX, double[][] fY){
 
         if((i - 1 < 0) || (j - 1 < 0)){
@@ -337,8 +427,15 @@ public class PairHMM {
 
     }
 
+    /**
+     *
+     * @param i
+     * @param j
+     * @param fM
+     * @param fX
+     */
     public void sumfX(int i, int j, double[][] fM, double[][]fX){
-        double emissionX = 0.25;
+//        double emissionX = 0.25;
 
 
         // If we're in the first column
@@ -346,6 +443,14 @@ public class PairHMM {
             fX[i][j] = 0;
         } else {
 
+            if (emissions != null) {
+
+
+                for (Character character : profile1.getProfileArray().get(i - 1).keySet()) {
+                    double emissionX = emissions[1][MatrixUtils.returnIndex(character)];
+                }
+
+            }
 
             double forwardXX = transitionXX * fX[i][j - 1];
             double forwardMX = transitionMX * fM[i][j - 1];
@@ -356,15 +461,31 @@ public class PairHMM {
 
     }
 
+    /**
+     *
+     * @param i
+     * @param j
+     * @param fM
+     * @param fY
+     */
     public void sumfY(int i, int j, double[][] fM, double[][] fY){
 
-        double emissionY = 0.25;
+//        double emissionY = 0.25;
 
 
 
         if (i - 1 < 0) {
             fY[i][j] = 0;
         } else {
+
+            if (emissions != null) {
+
+
+                for (Character character : profile2.getProfileArray().get(i - 1).keySet()) {
+                    emissionY = emissions[2][MatrixUtils.returnIndex(character)];
+                }
+
+            }
 
 
             double forwardYY = transitionYY * fY[i - 1][j];
@@ -376,7 +497,11 @@ public class PairHMM {
 
 
     }
-    //
+
+    /**
+     *
+     * @return
+     */
     public  double[][] backwardAlgorithm() {
 
         double[][] bM = new double[profile1.getProfileArray().size() + 2][profile2.getProfileArray().size() + 2];
@@ -408,12 +533,33 @@ public class PairHMM {
 
     }
 
+    /**
+     *
+     * @param i
+     * @param j
+     * @param bM
+     * @param bX
+     * @param bY
+     */
     public void sumbM(int i, int j, double[][] bM, double[][] bX, double[][] bY){
 
         double emissionM = getEmission(profile1, profile2, i, j);
 
-        double emissionX = 0.25;
-        double emissionY = 0.25;
+//        double emissionX = 0.25;
+//        double emissionY = 0.25;
+
+        if (emissions != null) {
+
+
+            for (Character character : profile1.getProfileArray().get(i - 1).keySet()) {
+                emissionX = emissions[1][MatrixUtils.returnIndex(character)];
+            }
+
+            for (Character character : profile2.getProfileArray().get(i - 1).keySet()) {
+                emissionY = emissions[2][MatrixUtils.returnIndex(character)];
+            }
+
+        }
 
 
 
@@ -426,13 +572,29 @@ public class PairHMM {
 
     }
 
+    /**
+     *
+     * @param i
+     * @param j
+     * @param bM
+     * @param bX
+     */
     public void sumbX(int i, int j, double[][] bM, double[][] bX){
 
         double emissionM = getEmission(profile1, profile2, i, j);
 
 
 
-        double emissionX = 0.25;
+//        double emissionX = 0.25;
+
+        if (emissions != null) {
+
+
+            for (Character character : profile1.getProfileArray().get(i - 1).keySet()) {
+                emissionX = emissions[1][MatrixUtils.returnIndex(character)];
+            }
+
+        }
 
 
         double backwardMX = emissionM * transitionXM * bM[i + 1][j + 1];
@@ -444,11 +606,27 @@ public class PairHMM {
 
     }
 
+    /**
+     *
+     * @param i
+     * @param j
+     * @param bM
+     * @param bY
+     */
     public void sumbY(int i, int j, double[][] bM, double[][] bY) {
 
         double emissionM = getEmission(profile1, profile2, i, j);
 
-        double emissionY = 0.25;
+//        double emissionY = 0.25;
+
+        if (emissions != null) {
+
+
+            for (Character character : profile2.getProfileArray().get(i - 1).keySet()) {
+                emissionY = emissions[2][MatrixUtils.returnIndex(character)];
+            }
+
+        }
 
         double backwardMY = emissionM * transitionYM * bM[i + 1][j + 1];
         double backwardYY = emissionY * transitionYY * bY[i + 1][j];
@@ -457,7 +635,10 @@ public class PairHMM {
 
     }
 
-
+    /**
+     *
+     * @return
+     */
     public HashProfile getViterbiAlignment(){
 
         for (int i = 0; i <= profile1.getProfileArray().size(); i++) {
@@ -477,6 +658,10 @@ public class PairHMM {
 
     }
 
+    /**
+     *
+     * @return
+     */
     public HashProfile getMEAAlignment(){
         double[][] fM = this.forwardAlgorithm();
         double[][] bM = this.backwardAlgorithm();
@@ -489,6 +674,12 @@ public class PairHMM {
         return alignment.getUpdatedProfile();
     }
 
+    /**
+     *
+     * @param fM
+     * @param bM
+     * @return
+     */
     public static double[][] calcPosteriorMatrix(double[][] fM, double[][]bM){
 
         double[][] pM = new double[fM.length][fM[0].length];
@@ -504,7 +695,14 @@ public class PairHMM {
         return pM;
     }
 
-
+    /**
+     *
+     * @param profile1
+     * @param profile2
+     * @param i
+     * @param j
+     * @return
+     */
     public double getTotalCount(HashProfile profile1, HashProfile profile2, int i, int j){
         double profile1Count = 0;
         double profile2Count = 0;
@@ -522,6 +720,15 @@ public class PairHMM {
         return profile1Count * profile2Count;
     }
 
+    /**
+     *
+     * @param profile1
+     * @param profile2
+     * @param i
+     * @param j
+     * @param subMatrix
+     * @return
+     */
     public double getTotalScore(HashProfile profile1, HashProfile profile2, int i, int j, SubstitutionMatrix subMatrix){
         double totalScore = 0;
 
@@ -549,6 +756,14 @@ public class PairHMM {
 
     }
 
+    /**
+     *
+     * @param profile1
+     * @param profile2
+     * @param i
+     * @param j
+     * @return
+     */
     public double getEmission(HashProfile profile1, HashProfile profile2, int i, int j){
         double emission;
         if (i > profile1.getProfileArray().size() - 1 || j > profile2.getProfileArray().size() - 1){
@@ -564,6 +779,40 @@ public class PairHMM {
         }
 
         return emission;
+    }
+
+    /**
+     *
+     * @param profile1Matches
+     * @param profile2Matches
+     */
+    public void addGapsToProfiles(List<Integer> profile1Matches, List<Integer> profile2Matches){
+        List<Integer> gapPos = new ArrayList<Integer>();
+        List<Integer> gapPos2 = new ArrayList<Integer>();
+
+
+        for (int k = 0; k < profile1Matches.size(); k++){
+            if (profile1Matches.get(k) == -1){
+                gapPos.add(k);
+
+            }
+        }
+
+        for (int k = 0; k < profile2Matches.size(); k++){
+            if (profile2Matches.get(k) == -1){
+                gapPos2.add(k);
+            }
+
+        }
+
+        if (gapPos.size() > 0){
+            profile1.addGaps(gapPos);
+
+        }
+
+        if (gapPos2.size() > 0) {
+            profile2.addGaps(gapPos2);
+        }
     }
 
 

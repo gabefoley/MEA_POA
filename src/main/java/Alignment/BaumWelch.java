@@ -33,6 +33,7 @@ public class BaumWelch {
     int numStates;
     int numAlpha;
     int seqLength;
+    String[] seqArray;
     int[][] intArray;
 
     double[] start;
@@ -50,6 +51,7 @@ public class BaumWelch {
     double bValue = 0;
     double ZERO_CONSTANT = 0.00000000000000000000000000001;
 
+    // Default constructor when start, transition, and emission stating values are not provided
     public BaumWelch(String[] seqArray, String type){
 
 
@@ -85,6 +87,7 @@ public class BaumWelch {
         this.numStates = start.length;
         this.numAlpha = 20;
         this.seqLength = seqArray[0].length();
+        this.seqArray = seqArray;
 
 
         this.start = start;
@@ -94,6 +97,7 @@ public class BaumWelch {
         this.type = type;
 
         intArray = new int[numSeqs][seqLength];
+
 
 
 
@@ -165,8 +169,8 @@ public class BaumWelch {
         if (type.equals("nucleotide")){
 
             for (int i=0; i < numSeqs; i++){
-                for (int j=0; j< seqLength; j++){
-                    switch(seqArray[i].charAt(j)) {
+                for (int j=0; j< seqArray[i].length(); j++) {
+                    switch (seqArray[i].charAt(j)) {
                         case 'A':
                             intArray[i][j] = 0;
                             break;
@@ -180,6 +184,7 @@ public class BaumWelch {
                             intArray[i][j] = 3;
                             break;
                     }
+
                 }
             }
 
@@ -380,14 +385,23 @@ public class BaumWelch {
      */
 
     double forward (int n, double [][] f, double [] start, double[][] transition, double [][] emission){
+        String seq = seqArray[n];
+        int seqLength = seq.length();
         fValue = 0;
         for(int i=0; i < numStates; i++){
+
+
             f[i][0] = start[i] * emission[i][intArray[n][0]];
         }
 
         for (int i=1; i< seqLength; i++){
             for (int j=0; j< numStates; j++){
                 for(int k=0; k< numStates; k++){
+                    // Emission at new cell multipled by the cost of transitioning from previous cell
+//                    System.out.println(emission[j][intArray[n][i]]);
+//                    System.out.println(f[k][i-1]);
+//                    System.out.println(transition[k][j]);
+//                    System.out.println(emission[j][intArray[n][i]] * f[k][i-1] * transition[k][j]);
                     f[j][i] += emission[j][intArray[n][i]] * f[k][i-1] * transition[k][j];
                 }
             }
@@ -412,6 +426,8 @@ public class BaumWelch {
      */
 
     double backward (int n, double [][] b, double [] start, double[][] transition, double [][] emission){
+        String seq = seqArray[n];
+        seqLength = seq.length();
 
         bValue = 0;
         for(int i=0; i< numStates; i++){

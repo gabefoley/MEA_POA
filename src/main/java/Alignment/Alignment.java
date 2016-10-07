@@ -20,8 +20,8 @@ public class Alignment {
     private int extendGapPenalty;
     private HashProfile profile1;
     private HashProfile profile2;
-    private List<Integer> stringIndexes;
-    private List<Integer> nodeIndexes;
+//    private List<Integer> stringIndexes;
+//    private List<Integer> nodeIndexes;
     private SubstitutionMatrix subMatrix;
     private boolean MEA;
     private HashProfile updatedProfile;
@@ -30,24 +30,49 @@ public class Alignment {
     private int[][] iBackIndexes;
     private int[][] jBackIndexes;
 
+    /**
+     * Constructor that takes sequences as Strings and converts them into HashProfiles
+     * @param seq1 First sequence
+     * @param seq2 Second sequence
+     * @param openGapPenalty Penalty for opening gap
+     * @param extendGapPenalty Penalty for extending gap
+     * @param subMatrix Substitution matrix
+     * @param MEA Boolean representing whether we are performing Maximum Expected Accuracy alignment
+     */
     public Alignment(String seq1, String seq2, int openGapPenalty, int extendGapPenalty, SubstitutionMatrix subMatrix, boolean MEA) {
 
         this(new HashProfile(seq1), new HashProfile(seq2), openGapPenalty, extendGapPenalty, subMatrix, MEA);
     }
 
+    /**
+     * Constructor for aligning two profiles together
+     * @param profile1 First profile to align
+     * @param profile2 Second profile to align
+     * @param openGapPenalty Penalty for opening a gap
+     * @param extendGapPenalty Penalty for extending a gap
+     * @param subMatrix Substituion matrix
+     * @param MEA Boolean representing whether we are performing Maximum Expected Accuracy alignment
+     */
     public Alignment(HashProfile profile1, HashProfile profile2, int openGapPenalty, int extendGapPenalty, SubstitutionMatrix subMatrix, boolean MEA) {
         this.profile1 = profile1;
         this.profile2 = profile2;
         this.openGapPenalty = openGapPenalty;
         this.extendGapPenalty = extendGapPenalty;
-        this.stringIndexes = new ArrayList<Integer>();
-        this.nodeIndexes = new ArrayList<Integer>();
+//        this.stringIndexes = new ArrayList<Integer>();
+//        this.nodeIndexes = new ArrayList<Integer>();
         this.subMatrix = subMatrix;
         this.MEA = MEA;
         this.updatedProfile = this.alignProfileToProfile();
 
     }
 
+
+
+
+
+    /**
+     * @return HashProfile representing the two aligned profiles
+     */
     public HashProfile getUpdatedProfile() {
         return this.updatedProfile;
     }
@@ -82,6 +107,12 @@ public class Alignment {
 //        return matches;
 //    }
 
+    /**
+     * Get the score for making a match in Maximum Expected Accuracy alignment
+     * @param i
+     * @param profile
+     * @return
+     */
     public double[] getMEAMatchScore(int i, HashProfile profile) {
         double[] matches = new double[profile.getProfileArray().size()];
         System.arraycopy(subMatrix.getMatrix()[i + 1], 1, matches, 0, profile.getProfileArray().size());
@@ -89,6 +120,13 @@ public class Alignment {
         return matches;
     }
 
+    /**
+     *
+     * @param profile1 First profile
+     * @param profile2 Second profile
+     * @param index
+     * @return
+     */
     public double[] getProfileMatchScore(HashProfile profile1, HashProfile profile2, int index) {
 
         int profile2Length = profile2.getLength();
@@ -99,7 +137,7 @@ public class Alignment {
         //TODO: Normalise match score at individual index
         for (int i = 0; i < profile2Length; i++) {
             double totalScore = 0;
-            double totalCount = 0;
+            double totalCount;
             double profile1Count = 0;
             double profile2Count = 0;
 
@@ -142,25 +180,23 @@ public class Alignment {
     }
 
 
-    /**
-     * Get list of Node IDs representing current sequence after alignment, null for gaps in sequence
-     *
-     * @return list of Node IDS
-     */
-    public List<Integer> getStringIndexes() {
-        return this.stringIndexes;
-    }
-
-
-    /**
-     * Get list of Node IDs that new sequence is being matched to, null for no match
-     *
-     * @return list of Node IDS
-     */
-    public List<Integer> getNodeIndexes() {
-        return this.nodeIndexes;
-    }
-
+//    /**
+//     * Get list of Node IDs representing current sequence after alignment, null for gaps in sequence
+//     * @return list of Node IDS
+//     */
+//    public List<Integer> getStringIndexes() {
+//        return this.stringIndexes;
+//    }
+//
+//
+//    /**
+//     * Get list of Node IDs that new sequence is being matched to, null for no match
+//     * @return list of Node IDS
+//     */
+//    public List<Integer> getNodeIndexes() {
+//        return this.nodeIndexes;
+//    }
+//
 
 //    /**
 //     * Returns the indexes of all predecessor nodes
@@ -194,15 +230,12 @@ public class Alignment {
      * Set up the initial sizes and values for the scores matrix, the matrices to
      * record the optimal moves through the score matrix, and the two mappings from
      * node ID to index and index to node ID
-     *
-     * @return Object containing scores matrix, backSeq matrix, backGraph matrix, nodeID to
-     * index, and index to node ID
      */
     public void initialiseDyncamicProgrammingData() {
         int l1 = this.profile1.getLength();
         int l2 = this.profile2.getLength();
-        Map<Integer, Integer> nodeIDToIndex = new HashMap<Integer, Integer>();
-        Map<Integer, Integer> nodeIndexToID = new HashMap<Integer, Integer>();
+//        Map<Integer, Integer> nodeIDToIndex = new HashMap<Integer, Integer>();
+//        Map<Integer, Integer> nodeIndexToID = new HashMap<Integer, Integer>();
 
 //        for (Integer index : this.graph.getNodeDict().keySet()) {
 //            nodeIDToIndex.put(this.graph.getNodeIDList().get(index), index);
@@ -238,24 +271,15 @@ public class Alignment {
             jBackIndexes[0][i + 1] = i;
         }
 
-        List<Object> initialisedData = new ArrayList<Object>();
-        initialisedData.add(nodeIDToIndex);
-        initialisedData.add(nodeIndexToID);
-        initialisedData.add(scores);
-        initialisedData.add(jBackIndexes);
-        initialisedData.add(iBackIndexes);
-
-//        return initialisedData;
-
     }
 
     /**
      * Trace back through the scores matrix, building the optimal alignment
      *
-     * @param scores
-     * @param jBackIndexes
-     * @param iBackIndexes
-     * @return
+     * @param scores Array representing the filled out dynamic programming matrix
+     * @param jBackIndexes Array representing the j-index to backtrack to
+     * @param iBackIndexes Array representing the i-index to backtrack to
+     * @return HashProfile representing the two aligned profiles
      */
 
     public HashProfile backtrack(double[][] scores, int[][] jBackIndexes, int[][] iBackIndexes) {
@@ -271,7 +295,7 @@ public class Alignment {
 //        List<Integer> terminalIndices = new ArrayList<Integer>();
 
 
-        double bestScore = scores[besti][bestj];
+//        double bestScore = scores[besti][bestj];
 
 //        for (int i = 0; i < terminalIndices.size(); i++) {
 //            double score = scores[terminalIndices.get(i)][bestj];
@@ -335,34 +359,8 @@ public class Alignment {
 
         }
 
-        //TODO: Make calling gaps a function
-
-        // Create list of positions with gaps in them
-        List<Integer> gapPos = new ArrayList<Integer>();
-        List<Integer> gapPos2 = new ArrayList<Integer>();
-
-        for (int i = 0; i < profile1Indexes.size(); i++) {
-            if (profile1Indexes.get(i) == -1) {
-                gapPos.add(i);
-            }
-        }
-
-        for (int i = 0; i < profile2Indexes.size(); i++) {
-            if (profile2Indexes.get(i) == -1) {
-                gapPos2.add(i);
-            }
-
-        }
-
-        // Update each profile to have gaps in them
-        if (gapPos.size() > 0) {
-            profile1.addGaps(gapPos);
-
-        }
-
-        if (gapPos2.size() > 0) {
-            profile2.addGaps(gapPos2);
-        }
+        // Update the profiles by adding the gaps to them
+        addGapsToProfiles(profile1Indexes, profile2Indexes);
 
 
         // Return new profile alignment by joining two updated profiles together
@@ -528,19 +526,18 @@ public class Alignment {
 
     /**
      * Align a new sequence to the PO Graph
-     *
-     * @return
+     * @return Call to backtrack with the the filled out scores, jIndexMatrix, and iIndexMatrix
      */
-
-
     public HashProfile alignProfileToProfile() {
 
         int l1 = this.profile1.getProfileArray().size();
         int l2 = this.profile2.getProfileArray().size();
 
+
         initialiseDyncamicProgrammingData();
 
-        //TODO: Fix up how initialisedData is returned
+
+
 //        List<Object> initialisedData = this.initialiseDyncamicProgrammingData(l1, l2);
 //
 //        double[][] scores = (double[][]) initialisedData.get(2);
@@ -737,9 +734,42 @@ public class Alignment {
 
     }
 
+    /**
+     * Update the two profiles with the gaps given by aligning them
+     * @param profile1Indexes List of integers representing the positions to add gaps in profile 1
+     * @param profile2Indexes List of integers representing the positions to add gaps in profile 2
+     */
+    public void addGapsToProfiles(List<Integer> profile1Indexes, List<Integer> profile2Indexes){
+
+        // Create list of positions with gaps in them
+        List<Integer> gapPos = new ArrayList<Integer>();
+        List<Integer> gapPos2 = new ArrayList<Integer>();
+
+        for (int i = 0; i < profile1Indexes.size(); i++) {
+            if (profile1Indexes.get(i) == -1) {
+                gapPos.add(i);
+            }
+        }
+
+        for (int i = 0; i < profile2Indexes.size(); i++) {
+            if (profile2Indexes.get(i) == -1) {
+                gapPos2.add(i);
+            }
+
+        }
+
+        // Update each profile to have gaps in them
+        if (gapPos.size() > 0) {
+            profile1.addGaps(gapPos);
+
+        }
+
+        if (gapPos2.size() > 0) {
+            profile2.addGaps(gapPos2);
+        }
 
 
-
+    }
 
 
 }
