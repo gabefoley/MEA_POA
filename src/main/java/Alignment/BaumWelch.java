@@ -1,6 +1,9 @@
 package Alignment;
 
+import Alignment.Utilities.MatrixUtils;
+
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import java.util.ArrayList;
@@ -58,7 +61,7 @@ public class BaumWelch {
         double [] start = {.5, .25, .25};
 
         double [][] transition = {
-                {.8, .1, .1},
+                {.6, .2, .2},
                 {.5, .4, .1},
                 {.5, .1, .4}
         };
@@ -85,8 +88,8 @@ public class BaumWelch {
 
         this.numSeqs = seqArray.length;
         this.numStates = start.length;
-        this.numAlpha = 20;
-        this.seqLength = seqArray[0].length();
+        this.numAlpha = 3;
+//        this.seqLength = seqArray[0].length();
         this.seqArray = seqArray;
 
 
@@ -102,273 +105,176 @@ public class BaumWelch {
 
 
 
+
         boolean converged = false;
 
 
 
 
 
-//        double [] start = {0.5, 0.25, 0.25};
-//        double [][] transition = {
-//                {0.70, 0.15, 0.15},
-//                {0.70, 0.30, 0},
-//                {0.70, 0, 0.30}};
-//
-////        double [][] emission = {
-////                {0.25, 0.25, 0.25, 0.25},
-////                {0.25, 0.35, 0.10, 0.30},
-////                {0.25, 0.20, 0.05, 0.50}};
-//
-//        double [][] emission = {
-//                {0.25, 0.25, 0.25, 0.25},
-//                {0.25, 0.25, 0.25, 0.25},
-//                {0.25, 0.25, 0.25, 0.25}};
-
-//        String [] seqArray = {
-//                "AGAAAGGTCTAGTGTTTGGTGATGTATCTATAGAGGGACGGGGGGGGGGGGGGGG",
-//                "GGTCCTTTCAATATCAGTTGAATATGATGTGAGTGAGTTG",
-//                "GGGGGGTGGGGCCTTGATAAGAAGGGCTGTCTTTTGGTAG",
-//                "GTACCGGTATAGAAAAGACCGGATTCGAATTAATAATAAG",
-//                "TATTACTTGTTCAGCGTTATAAGATTCAGGAGGAGGTGTG"};
-
-//        String [] seqArray = {
-//                "AAAAA",
-//                "AAGGA",
-//                "AACCA",
-//                "AACGG"
-//        };
-
-//        // Parameters for the Moss (2008) example
-//        String [] seqArray = {
-//                "ATTA",
-//                "TATT"
-//        };
-//
-//        double [] start = {.85, .15};
-//
-//        double [][] transition = {
-//                {.3, .7},
-//                {.9, .1},
-//        };
-//
-//        double [][] emission = {
-//                {.4, .6 },
-//                {.5, .5},
-//        };
-
-        // Parameters for the Moss (2008) example
-
-
-
-
-
-
-
-        // Convert sequences
-
-        if (type.equals("nucleotide")){
-
-            for (int i=0; i < numSeqs; i++){
-                for (int j=0; j< seqArray[i].length(); j++) {
-                    switch (seqArray[i].charAt(j)) {
-                        case 'A':
-                            intArray[i][j] = 0;
-                            break;
-                        case 'T':
-                            intArray[i][j] = 1;
-                            break;
-                        case 'C':
-                            intArray[i][j] = 2;
-                            break;
-                        case 'G':
-                            intArray[i][j] = 3;
-                            break;
-                    }
-
-                }
-            }
-
-        }
-
-        else if (type.equals("protein")) {
-
-
-            for (int i = 0; i < numSeqs; i++) {
-                for (int j = 0; j < seqLength; j++) {
-                    switch (seqArray[i].charAt(j)) {
-                        case 'A':
-                            intArray[i][j] = 0;
-                            break;
-                        case 'R':
-                            intArray[i][j] = 1;
-                            break;
-                        case 'N':
-                            intArray[i][j] = 2;
-                            break;
-                        case 'D':
-                            intArray[i][j] = 3;
-                            break;
-                        case 'C':
-                            intArray[i][j] = 4;
-                            break;
-                        case 'Q':
-                            intArray[i][j] = 5;
-                            break;
-                        case 'E':
-                            intArray[i][j] = 6;
-                            break;
-                        case 'G':
-                            intArray[i][j] = 7;
-                            break;
-                        case 'H':
-                            intArray[i][j] = 8;
-                            break;
-                        case 'I':
-                            intArray[i][j] = 9;
-                            break;
-                        case 'L':
-                            intArray[i][j] = 10;
-                            break;
-                        case 'K':
-                            intArray[i][j] = 11;
-                            break;
-                        case 'M':
-                            intArray[i][j] = 12;
-                            break;
-                        case 'F':
-                            intArray[i][j] = 13;
-                            break;
-                        case 'P':
-                            intArray[i][j] = 14;
-                            break;
-                        case 'S':
-                            intArray[i][j] = 15;
-                            break;
-                        case 'T':
-                            intArray[i][j] = 16;
-                            break;
-                        case 'W':
-                            intArray[i][j] = 17;
-                            break;
-                        case 'Y':
-                            intArray[i][j] = 18;
-                            break;
-                        case 'V':
-                            intArray[i][j] = 19;
-                            break;
-                    }
-                }
-            }
-        }
-
-
-
 
         // Compute recurrance
-        while (!converged){
-            double [] startR = new double [3];
-            double [][] transitionR = new double [numStates][numStates];
-            double [][] emissionR = new double [numStates][numAlpha];
+        while (!converged) {
+            MatrixUtils.printMatrix(transition);
+            MatrixUtils.printMatrix(emission);
+//            double[] startR = new double[3];
+//            double[][] transitionR = new double[numStates][numStates];
+//            double[][] emissionR = new double[numStates][numAlpha];
 
-            for (int i = 0; i < numStates; i++){
-                startR[i] = ZERO_CONSTANT;
-            }
+//            for (int i = 0; i < numStates; i++) {
+//                startR[i] = ZERO_CONSTANT;
+//            }
+//
+//            for (int i = 0; i < numStates; i++) {
+//                for (int j = 0; j < numStates; j++) {
+//                    transitionR[i][j] = ZERO_CONSTANT;
+//                }
+//            }
+//
+//            for (int i = 0; i < numStates; i++) {
+//                for (int j = 0; j < numAlpha; j++) {
+//                    emissionR[i][j] = ZERO_CONSTANT;
+//                }
+//            }
 
-            for (int i = 0; i< numStates; i++){
-                for (int j=0; j< numStates; j++) {
-                    transitionR[i][j] = ZERO_CONSTANT;
-                }
-            }
+            for (int n = 0; n < numSeqs; n++) {
+                String seq = seqArray[n];
+                int seqLength = seq.length();
+                double[][] f = new double[numStates][seqLength + 1];
+                double[][] b = new double[numStates][seqLength + 1];
 
-            for (int i = 0; i < numStates; i++){
-                for (int j=0; j< numAlpha; j++){
-                    emissionR[i][j] = ZERO_CONSTANT;
-                }
-            }
-
-            for (int n = 0; n < numSeqs; n++){
-                double [][] f = new double[numStates][seqLength];
-                double [][] b = new double [numStates][seqLength];
-
-                for (int i = 0; i < numStates; i++){
-                    for (int j = 0; j < seqLength; j++){
+                for (int i = 0; i < numStates; i++) {
+                    for (int j = 0; j < seqLength + 1; j++) {
                         f[i][j] = ZERO_CONSTANT;
                         b[i][j] = ZERO_CONSTANT;
                     }
                 }
 
                 // Calculate the forward and backwards values
-                fValue = forward (n, f, start, transition, emission);
+                fValue = forward(n, f, start, transition, emission);
                 bValue = backward(n, b, start, transition, emission);
+                double[][] probMatrix = calculateProbMatrix(f, b);
+                double[][][] transitionProbs = calculateTransitionProbs(f, b, seq, transition, emission);
+                double[][] updatedTransition = calculateTransitionMatrix(transitionProbs, probMatrix, f, b, transition, emission);
+                System.out.println("here?");
+
+                double[][] updatedEmission = calculateEmissionMatrix(probMatrix, seq);
+                System.out.println("here");
+                double transitionDiff = getDiff(transition, updatedTransition);
+                double emissionDiff = getDiff(emission, updatedEmission);
+
+//                List<Object> updatedTransitionValues = getUpdatedValues(transition, updatedTransition, numStates, transitionDiff);
+//                List<Object> updatedEmissionValues = getUpdatedValues(emission, updatedEmission, numAlpha, emissionDiff);
+
+                double startDiff = 0;
 
 
-                //Update start matrix
-                for (int k = 0; k < numStates; k++) {
-                    startR[k] += (1 / fValue) * f[k][0] * b[k][0];
+                System.out.println(transitionDiff);
 
-
-                    //Update transition matrix
-                    for (int l = 0; l < numStates; l++) {
-                        for (int i = 0; i < seqLength - 2; i++) {
-                            transitionR[k][l] += (1/fValue) * f[k][i] * transition[k][l] * emission[l][intArray[n][i+1]] * b[l][i+1];
-                        }
-                    }
-
-                    //Update emission matrix
-                    for (int i=0; i < seqLength; i++){
-                        emissionR[k][intArray[n][i]] += (1/fValue) * f[k][i] * b[k][i];
-                    }
-
+                // Check for convergence
+                if (transitionDiff < 0.00000001 && emissionDiff < 0.00000001) {
+                    converged = true;
 
                 }
+//                transitionDiff = (Double) updatedTransitionValues.get(1);
+//
+//                emissionDiff = (Double) updatedEmissionValues.get(1);
+//
+//                System.out.println(transitionDiff);
+
+
+//                // Check for convergence
+//                if (startDiff + transitionDiff + emissionDiff < 0.000000000001) {
+//                    converged = true;
+//                }
+
+                start = start;
+                transition = updatedTransition;
+                emission = updatedEmission;
 
             }
-
-            //Update main arrays and find max difference
-
-            double sum = 0;
-            double startDiff = 0;
-
-            for (int i = 0; i< numStates; i++){
-                sum += startR[i];
-            }
-
-            for (int i=0; i <numStates; i++){
-                if (Math.abs((startR[i] / sum) - start[i]) > startDiff){
-                    startDiff = Math.abs((startR[i] / sum) - start[i]);
-                }
-                start[i] = startR[i] / sum;
-            }
-
-            // Update transition
-            transitionDiff = 0.0;
-            emissionDiff = 0.0;
-
-
-
-            List<Object> updatedTransitionValues = getUpdatedValues(transition, transitionR, numStates, transitionDiff);
-            List<Object> updatedEmissionValues = getUpdatedValues(emission, emissionR, numAlpha, emissionDiff);
-
-
-
-            transition = (double[][]) updatedTransitionValues.get(0);
-            transitionDiff = (Double) updatedTransitionValues.get(1);
-
-            emission = (double[][]) updatedEmissionValues.get(0);
-            emissionDiff = (Double) updatedEmissionValues.get(1);
-
-
-
-            // Check for convergence
-            if (startDiff + transitionDiff + emissionDiff < 0.000000000001) {
-                converged = true;
-            }
-
-            this.start = start;
-            this.transition = transition;
-            this.emission = emission;
-
         }
+
+////                System.out.println("Original fValue " + fValue + " and bValue " + bValue);
+//
+//
+//                //Update start matrix
+//                for (int k = 0; k < numStates; k++) {
+//                    startR[k] += (1 / fValue) * f[k][0] * b[k][0];
+//
+//
+//                    //Update transition matrix
+//                    for (int l = 0; l < numStates; l++) {
+//                        for (int i = 0; i < seqLength - 2; i++) {
+////                            System.out.println("Emission: " + emission[l][intArray[n][i+1]]);
+//                            transitionR[k][l] += (1/fValue) * f[k][i] * transition[k][l] * emission[l][intArray[n][i+1]] * b[l][i+1];
+////                            System.out.println(transitionR[k][l]);
+//
+//                        }
+//                    }
+//
+//                    //Update emission matrix
+//                    for (int i=0; i < seqLength; i++){
+//                        emissionR[k][intArray[n][i]] += (1/fValue) * f[k][i] * b[k][i];
+////                        System.out.println(emissionR[k][intArray[n][i]]);
+//                    }
+//
+//
+//                }
+////                for (double value: startR){
+////            System.out.println(value);
+////
+////        }
+////        MatrixUtils.printMatrix(emissionR);
+////        MatrixUtils.printMatrix(transitionR);
+////
+//            }
+//
+//            //Update main arrays and find max difference
+//
+//            double sum = 0;
+//            double startDiff = 0;
+//
+//            for (int i = 0; i< numStates; i++){
+//                sum += startR[i];
+//            }
+//
+//            for (int i=0; i <numStates; i++){
+//                if (Math.abs((startR[i] / sum) - start[i]) > startDiff){
+//                    startDiff = Math.abs((startR[i] / sum) - start[i]);
+//                }
+//                start[i] = startR[i] / sum;
+//            }
+//
+//            // Update transition
+//            transitionDiff = 0.0;
+//            emissionDiff = 0.0;
+//
+//
+//
+//            List<Object> updatedTransitionValues = getUpdatedValues(transition, transitionR, numStates, transitionDiff);
+//            List<Object> updatedEmissionValues = getUpdatedValues(emission, emissionR, numAlpha, emissionDiff);
+//
+//
+//
+//            transition = (double[][]) updatedTransitionValues.get(0);
+//            transitionDiff = (Double) updatedTransitionValues.get(1);
+//
+//            emission = (double[][]) updatedEmissionValues.get(0);
+//            emissionDiff = (Double) updatedEmissionValues.get(1);
+//
+//
+//
+//            // Check for convergence
+//            if (startDiff + transitionDiff + emissionDiff < 0.000000000001) {
+//                converged = true;
+//            }
+//
+//            this.start = start;
+//            this.transition = transition;
+//            this.emission = emission;
+//
+//        }
 
 
 
@@ -387,25 +293,53 @@ public class BaumWelch {
     double forward (int n, double [][] f, double [] start, double[][] transition, double [][] emission){
         String seq = seqArray[n];
         int seqLength = seq.length();
+        double startSum = 0;
         fValue = 0;
-        for(int i=0; i < numStates; i++){
 
+        for(int i=0; i< numStates; i++){
+            f[i][0] = start[i];
+            startSum += f[i][0];
 
-            f[i][0] = start[i] * emission[i][intArray[n][0]];
         }
 
-        for (int i=1; i< seqLength; i++){
+        // Normalise the starting cells
+        for (int i=0; i < numStates; i++){
+            f[i][0] = f[i][0] / startSum;
+        }
+
+//        // The starting cells are found by multiplying the starting probability by the emission and transition probabilities
+//        for(int i=0; i < numStates; i++) {
+//            for (int j = 0; j < numStates; j++) {
+//
+//
+//                f[i][0] += start[j] * emission[i][intArray[n][0]] * transition[j][i];
+//            }
+//            startSum += f[i][0];
+//        }
+
+
+
+        for (int i=0; i< seqLength; i++){
+            double cellSum = 0;
             for (int j=0; j< numStates; j++){
                 for(int k=0; k< numStates; k++){
                     // Emission at new cell multipled by the cost of transitioning from previous cell
 //                    System.out.println(emission[j][intArray[n][i]]);
-//                    System.out.println(f[k][i-1]);
+//                    System.out.println(f[k][i]);
 //                    System.out.println(transition[k][j]);
-//                    System.out.println(emission[j][intArray[n][i]] * f[k][i-1] * transition[k][j]);
-                    f[j][i] += emission[j][intArray[n][i]] * f[k][i-1] * transition[k][j];
+//                    System.out.println(emission[j][intArray[n][i]] * f[k][i] * transition[k][j]);
+                    f[j][i + 1] += emission[j][MatrixUtils.returnIndex(seq.charAt(i), type)] * f[k][i] * transition[k][j];
                 }
+                cellSum += f[j][i+1];
             }
+
+            // Normalise the cells
+            for (int l=0; l < numStates; l++){
+                f[l][i + 1] = f[l][i + 1] / cellSum;
+            }
+
         }
+
 
         for (int i=0; i <numStates; i++){
             fValue += f[i][seqLength-1];
@@ -431,19 +365,29 @@ public class BaumWelch {
 
         bValue = 0;
         for(int i=0; i< numStates; i++){
-            b[i][seqLength-1] = 1;
+            b[i][seqLength] = 1;
         }
 
-        for (int i = seqLength - 2; i>= 0; i--){
+        for (int i = seqLength - 1; i>= 0; i--){
+            double cellSum = 0;
             for(int j=0; j<numStates; j++){
                 for(int k=0; k<numStates; k++){
-                    b[j][i] += emission[k][intArray[n][i+1]] * b[k][i+1] * transition[j][k];
+
+                    b[j][i] += emission[k][MatrixUtils.returnIndex(seq.charAt(i), type)] * b[k][i + 1] * transition[j][k];
+
+//                    b[j][i] += emission[k][intArray[n][i]] * b[k][i + 1] * transition[j][k];
                 }
+                cellSum += b[j][i];
+            }
+
+            // Normalise the cells
+            for (int l=0; l < numStates; l++){
+                b[l][i] = b[l][i] / cellSum;
             }
         }
 
         for (int i = 0; i < numStates; i++){
-            bValue += b[i][0] * emission[i][intArray[n][0]] * start[i];
+            bValue += b[i][0] * emission[i][MatrixUtils.returnIndex(seq.charAt(0), type)] * start[i];
         }
 
         return bValue;
@@ -497,6 +441,122 @@ public class BaumWelch {
 
     }
 
+    public double[][] calculateProbMatrix(double[][] f, double[][]b){
+        double[][] p = new double[numStates][seqLength + 1];
+        for (int j = 0; j < seqLength + 1; j++){
+            double cellSum = 0;
+            for (int i=0; i< numStates; i++){
+                p[i][j] = f[i][j] * b[i][j];
+                cellSum += p[i][j];
+
+            }
+
+            // Normalise the cells
+            for (int k=0; k < numStates; k++){
+                p[k][j] = p[k][j] / cellSum;
+            }
+
+        }
+
+        return p;
+
+    }
+
+    public double[][][] calculateTransitionProbs(double[][] f, double[][] b, String seq, double[][] transition, double[][] emission){
+        double[][][] updatedTransitions = new double[numStates][numStates][seqLength];
+
+        for (int i=0; i < numStates; i++){
+            for (int j=0; j < numStates; j++){
+                for (int k = 0; k < seqLength; k++) {
+
+                    updatedTransitions[i][j][k] = f[i][k] * b[j][k+1] * transition[i][j] * emission[j][MatrixUtils.returnIndex(seq.charAt(k), type)];
+
+//                    updatedTransitions[i][j][k] = f[i][k] * b[j][k+1] * transition[i][j] * emission[j][intArray[0][k]];
+                }
+            }
+
+        }
+
+        return updatedTransitions;
+
+    }
+
+    public double[][] calculateTransitionMatrix(double[][][] transitionProbs, double[][] probMatrix, double[][] f, double[][] b, double[][]
+                                               transition, double[][] emission){
+        double[][] updatedTransition = new double[numStates][numStates];
+
+
+        // Update to the sum of all possible transitions from state - state / probability of being in this state
+        for (int i = 0; i < numStates; i++){
+            for (int j = 0; j < numStates; j++){
+                updatedTransition[i][j] = sumRow(transitionProbs[i][j], 0) / sumRow(probMatrix[i], 0);
+
+            }
+        }
+
+            double[] sumRows = new double[numStates];
+            for (int k = 0; k < numStates; k++){
+                 sumRows[k] = sumRow(updatedTransition[k], 0);
+
+            }
+        for (int i = 0; i < numStates; i++) {
+
+            double sumRow = sumRow(updatedTransition[i], 0);
+            for (int k = 0; k < numStates; k++) {
+//                updatedTransition[i][k] = updatedTransition[i][k] / sumRows[k];
+                updatedTransition[i][k] = updatedTransition[i][k] / sumRow;
+
+            }
+        }
+        return updatedTransition;
+    }
+
+    public double[][] calculateEmissionMatrix(double[][] probMatrix, String seq){
+        double[][] updatedEmission = new double[numStates][numStates];
+
+        System.out.println("and here?");
+
+//        MatrixUtils.printMatrix(probMatrix);
+        for (int i = 0; i < numStates; i++){
+
+//                    Character[] alphabet = MatrixUtils.getAlphabet(type)
+            HashSet<Character> alphabet = getAlphabet(seq);
+                    for (Character letter : alphabet) {
+                        double sum = 0;
+
+
+
+                            for (int l = 0; l < seqLength; l++) {
+                                if (letter.equals(seq.charAt(l))) {
+//                                    System.out.println("MATCH");
+//                                    System.out.println(letter);
+//                                    System.out.println(probMatrix[i][l + 1]);
+                                    sum += probMatrix[i][l + 1];
+//                                    System.out.println(sum);
+                                    updatedEmission[i][MatrixUtils.returnIndex(letter, type)] += probMatrix[i][l+1];
+                                }
+
+
+                        }
+                        updatedEmission[i][MatrixUtils.returnIndex(letter, type)] = updatedEmission[i][MatrixUtils.returnIndex(letter, type)] / sumRow(probMatrix[i], 1);
+
+                    }
+        }
+        return updatedEmission;
+    }
+
+    public double getDiff(double[][] original, double[][] updated){
+
+        double sum = 0;
+        for (int j = 0; j < original.length; j++) {
+            for (int i = 0; i < original[0].length; i++) {
+                sum += Math.pow(original[i][j] - updated[i][j], 2);
+            }
+        }
+        double diff = Math.sqrt(sum);
+        return diff;
+    }
+
     /**
      * @return Array of doubles representing start probabilities
      */
@@ -517,6 +577,28 @@ public class BaumWelch {
     public double[][] getEmission(){
         return this.emission;
     }
+
+    public HashSet<Character> getAlphabet(String seq){
+        HashSet<Character> alphabet = new HashSet<Character>();
+        while (alphabet.size() < numAlpha){
+        for (int i = 0; i < seqLength; i++) {
+            if (!alphabet.contains(seq.charAt(i))) {
+                alphabet.add(seq.charAt(i));
+            }
+        }
+
+        }
+        return alphabet;
+    }
+
+    public double sumRow(double[] row, int startPos){
+        double total = 0;
+        for (int val = startPos; val < row.length; val++){
+            total += row[val];
+        }
+        return total;
+    }
+
 
 
 }

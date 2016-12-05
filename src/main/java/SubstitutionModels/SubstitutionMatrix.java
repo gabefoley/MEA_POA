@@ -187,7 +187,26 @@ private static final double[][] blosum62LatestProbs =
         {0.0013, 0.0009, 0.0007, 0.0006, 0.0003, 0.0007, 0.0009, 0.0008, 0.0015, 0.0014, 0.0022, 0.0010, 0.0006, 0.0042, 0.0005, 0.0010, 0.0009, 0.0009, 0.0102, 0.0015},
         {0.0051, 0.0016, 0.0012, 0.0013, 0.0014, 0.0012, 0.0017, 0.0018, 0.0006, 0.0120, 0.0095, 0.0019, 0.0023, 0.0026, 0.0012, 0.0024, 0.0036, 0.0004, 0.0015, 0.0196}};
         // A,G,C,T
+
+    private static final double[][] hmmocModel = new double[][]{
+            {0.68998466463252384, 0.10333844512249205, 0.10333844512249205, 0.10333844512249205},
+            {0.10333844512249205, 0.68998466463252384, 0.10333844512249205, 0.10333844512249205},
+            {0.10333844512249205, 0.10333844512249205, 0.68998466463252384, 0.10333844512249205},
+            {0.10333844512249205, 0.10333844512249205, 0.10333844512249205, 0.68998466463252384}};
+
+//    private static final double[][] hmmocModel = new double[][]{
+//            {0.2583461, 0.2583461, 0.2583461, 0.2583461},
+//            {0.2583461, 0.2583461, 0.2583461, 0.2583461},
+//            {0.2583461, 0.2583461, 0.2583461, 0.2583461},
+//            {0.2583461, 0.2583461, 0.2583461, 0.2583461}};
+
     private static final double[][] exampleModel = new double[][]{
+            {0.50, 0.05, 0.15, 0.30},
+            {0.05, 0.50, 0.30, 0.15},
+            {0.15, 0.30, 0.50, 0.05},
+            {0.30, 0.15, 0.05, 0.50}};
+
+    private static final double[][] forwardModel = new double[][]{
             {0.50, 0.05, 0.15, 0.30},
             {0.05, 0.50, 0.30, 0.15},
             {0.15, 0.30, 0.50, 0.05},
@@ -229,6 +248,11 @@ private static final double[][] blosum62LatestProbs =
 
         if (selection.equals("exampleModel")){
             this.matrix = exampleModel;
+            type = "nucleotide";
+        }
+
+        if (selection.equals("hmmocModel")){
+            this.matrix = hmmocModel;
             type = "nucleotide";
         }
     }
@@ -342,13 +366,26 @@ private static final double[][] blosum62LatestProbs =
                 case 'X':
                     return 20;
                 case 'Z':
-                    return 22;
+                    return 20;
                 case '*':
-                    return 23;
+                    return 20;
                 default:
                     return -1;
             }
         }
+
+//        case 'V':
+//        return 17;
+//        case 'B':
+//        return 20;
+//        case 'X':
+//        return 20;
+//        case 'Z':
+//        return 22;
+//        case '*':
+//        return 23;
+//        default:
+//        return -1;
 
         else if (type.equals("proteinestimatedlambda")) {
 

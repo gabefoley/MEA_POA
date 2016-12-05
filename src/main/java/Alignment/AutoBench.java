@@ -6,6 +6,7 @@ package Alignment;
 
 import java.io.*;
 
+import Alignment.Utilities.MatrixUtils;
 import Alignment.Utilities.Sequence;
 import SubstitutionModels.SubstitutionMatrix;
 import org.biojava.nbio.alignment.Alignments;
@@ -31,168 +32,172 @@ import java.util.Map;
 public class AutoBench {
     public static void main(String args[]) throws Exception {
 
-        String dir = args[0];
-        String inputDir = dir + "/in";
-        String refDir = dir + "/ref";
-        String[] inputs;
+        for (int open = -4; open > -16; open -= 2) {
+            for (int extend = -2; extend > open; extend -= 2) {
+                System.out.println(open);
+                System.out.println(extend);
 
-        ArrayList<String> seqsList = new ArrayList<String>();
-        ArrayList<Double> scoresList = new ArrayList<Double>();
+                String dir = args[0];
+                String inputDir = dir + "/in";
+//        String refDir = dir + "/larger";
+                String refDir = dir + "/ref";
+
+                String[] inputs;
+
+                ArrayList<String> seqsList = new ArrayList<String>();
+                ArrayList<Double> scoresList = new ArrayList<Double>();
 //        String seqString = "";
 //        String scoreString = "";
-        ArrayList<String[]> completeScores = new ArrayList<String[]>();
-        ArrayList<String[]> msaScores = new ArrayList<String[]>();
-        ArrayList<String[]> viterbiScores = new ArrayList<String[]>();
-        ArrayList<String[]> meaScores = new ArrayList<String[]>();
+                ArrayList<String[]> completeScores = new ArrayList<String[]>();
+                ArrayList<String[]> msaScores = new ArrayList<String[]>();
+                ArrayList<String[]> viterbiScores = new ArrayList<String[]>();
+                ArrayList<String[]> meaScores = new ArrayList<String[]>();
 
 
-        //        Map<String, String[]> completeMap = new HashMap<String, String[]>();
+                //        Map<String, String[]> completeMap = new HashMap<String, String[]>();
 
 
-        try {
-            File file = new File(refDir);
+                try {
+                    File file = new File(refDir);
 
-            // array of files and directory
-            inputs = file.list();
+                    // array of files and directory
+                    inputs = file.list();
 
-            // For each file in the reference directory
-            for (String input : inputs) {
-
-
-                    System.out.println("Reading from file : " + input);
-
-                    ArrayList<String[]> refAlignment = getSeqs(refDir, input);
-                    ArrayList<String[]> seqs = getSeqs(inputDir, input);
-
-                    // Get the character information from the conserved columns in the reference alignment
-//                ArrayList<String[]> goodCols = getGoodCols(refAlignment);
-
-                    // Align the input sequences
-                    int multiGapOpen = -10;
-                    int multiGapExtend = -1;
+                    int multiGapOpen = open;
+                    int multiGapExtend = extend;
                     SubstitutionMatrix blosum62 = new SubstitutionMatrix("blosum62");
                     SubstitutionMatrix blosum62Probs = new SubstitutionMatrix("blosum62Probs");
                     SubstitutionMatrix blosum62EstimatedProbs = new SubstitutionMatrix("blosum62estimatedlambda");
                     SubstitutionMatrix blosum62EstimatedWithX = new SubstitutionMatrix("blosum62EstimatedWithX");
 
 
-                    double tau = 0.1;
-                    double epsilon = 0.3;
+                    double tau = 0.00001;
+                    double epsilon = 0.95;
                     double delta = 0.01;
+
+
 
                     double emissionX = 0.05;
                     double emissionY = 0.05;
 
-                    // Get BioJavaMSA
-//                Profile<ProteinSequence, AminoAcidCompound> bioJavaMSA = getBioJavaMSA(seqs, multiGapOpen, multiGapExtend);
 
+//            runBW(inputDir);
 
-                HashProfile viterbi = getHMMMSA(seqs, tau, epsilon, delta, emissionX,
-                        emissionY, "viterbi", blosum62EstimatedWithX);
+                    // For each file in the reference directory
+                    String[] types = {"nw"};
+                    for (String type : types) {
+                        for (String input : inputs) {
 
-                    // Get MSA
-                    HashProfile MSA = getMSA(seqs, multiGapOpen, multiGapExtend, blosum62);
+                            System.out.println("Reading from file : " + input);
 
+                            Sequence[] seqs = getSeqs(inputDir, input);
 
+                            HashProfile alignment;
 
-                    HashProfile mea = getHMMMSA(seqs, tau, epsilon, delta, emissionX, emissionY, "mea", blosum62EstimatedWithX);
+                            if (type.equals("nw")) {
+                                alignment = getMSA(seqs, multiGapOpen, multiGapExtend, blosum62);
 
-//                writeToFile(bioJavaMSA);
-                    writeToFile(MSA, "msa", input);
+                            } else {
+                                alignment = getHMMMSA(seqs, tau, epsilon, delta, emissionX,
+                                        emissionY, type, blosum62EstimatedWithX);
+                            }
 
-                    String[] msaScoreList = runQScore("msa", input);
-
-                    writeToFile(viterbi, "viterbi", input);
-
-                    String[] viterbiScoreList = runQScore("viterbi", input);
-
-                    writeToFile(mea, "mea", input);
-
-                    String[] meaScoreList = runQScore("mea", input);
-
-
-                    completeScores.add(msaScoreList);
-                    msaScores.add(msaScoreList);
-                    viterbiScores.add(viterbiScoreList);
-                    meaScores.add(meaScoreList);
-
-
-                }
-
-                String[] msaStrings = getScoreStrings(msaScores);
-                String[] viterbiStrings = getScoreStrings(viterbiScores);
-                String[] meaStrings = getScoreStrings(meaScores);
-
-                Rengine engine = Rengine.getMainEngine();
-                if(engine == null) {
-                    engine = new Rengine(new String[]{"--no-save"}, false, null);
-                }
-
+                            writeToFile(alignment, type, input, multiGapOpen, multiGapExtend);
+                        }
+                    }
+//                    String[] scoreList = runQScore(type, input);
+//
+//                    if (type.equals("nw")){
+//                        msaScores.add(scoreList);
+//
+//                    }
+//
+//                    else if (type.equals("mea")){
+//                        meaScores.add(scoreList);
+//                    }
+//
+//                    else if (type.equals("viterbi")){
+//                        viterbiScores.add(scoreList);
+//                    }
+//
+//
+//
+//
+//
+//                    // Align the input sequences
+//
+////                    HashProfile viterbi = getHMMMSA(seqs, tau, epsilon, delta, emissionX,
+////                            emissionY, "viterbi", blosum62EstimatedWithX);
+////
+////                    writeToFile(viterbi, "viterbi", input);
+//////
+////                    String[] viterbiScoreList = runQScore("viterbi", input);
+////
+////                    viterbiScores.add(viterbiScoreList);
+////
+////
+////                    // Get MSA
+////                    writeToFile(MSA, "msa", input);
+////                    String[] msaScoreList = runQScore("msa", input);
+////
+////                    HashProfile mea = getHMMMSA(seqs, tau, epsilon, delta, emissionX, emissionY, "mea", blosum62EstimatedWithX);
+////                    writeToFile(mea, "mea", input);
+////                    String[] meaScoreList = runQScore("mea", input);
+////                    meaScores.add(meaScoreList);
+//
+//
+////                    completeScores.add(msaScoreList);
+//
+//
+//                }
+//            }
+//
+//              String[] msaStrings = getScoreStrings(msaScores);
+//                String[] viterbiStrings = getScoreStrings(viterbiScores);
+//                String[] meaStrings = getScoreStrings(meaScores);
+//
+//                Rengine engine = Rengine.getMainEngine();
+//                if(engine == null) {
+//                    engine = new Rengine(new String[]{"--no-save"}, false, null);
+//                }
+//
 //                Rengine engine = new Rengine(new String[]{"--no-save"}, false, null);
-
-                plotComparison(msaStrings, viterbiStrings, meaStrings, "msa", "viterbi", "mea", "First full run with bad X characters in sub matrix and removed all sets that caused profile size mismatches ", engine);
-//                plotSingle(msaStrings, "msa", engine);
+//
+//                plotComparison(msaStrings, viterbiStrings, meaStrings, "nw", "viterbi", "mea", "Saving NW scores -8 -2 ", engine);
+////                plotComparison(msaStrings, viterbiStrings, "nw", "viterbi", "Run of first 80 datasets from BAliBASE 3 ", engine);
+//                plotSingle(msaStrings, "nw", engine);
 //                plotSingle(viterbiStrings, "viterbi", engine);
 //                plotSingle(meaStrings, "mea", engine);
-
-
 //
 //
-//
+////
+////
+////
 //            Rengine engine = new Rengine(new String[] { "--no-save"}, false, null);
+////
+////            engine.eval("require(ggplot2)");
+////            engine.eval("require(reshape2)");
+////            engine.eval("qScore <- " + qScore);
+////            engine.eval("totalColumnScore <- " + totalColumnScore);
+////            engine.eval("modelerScore <- " + modelerScore);
+////            engine.eval("clineScore <- " + clineScore);
+////            engine.eval("x <- " + dataSets);
+////            engine.eval("df <- data.frame(x, qScore, totalColumnScore, modelerScore, clineScore)");
+////            engine.eval("df.melted <- melt(df, id= 'x')");
+////            engine.eval("pop <- ggplot(data = df.melted, aes(x =x, y=value, color = variable)) + geom_line()");
+////            engine.eval("ggsave('/Users/gabe/Dropbox/happy.png', pop)");
+////            System.out.println("Done");
 //
-//            engine.eval("require(ggplot2)");
-//            engine.eval("require(reshape2)");
-//            engine.eval("qScore <- " + qScore);
-//            engine.eval("totalColumnScore <- " + totalColumnScore);
-//            engine.eval("modelerScore <- " + modelerScore);
-//            engine.eval("clineScore <- " + clineScore);
-//            engine.eval("x <- " + dataSets);
-//            engine.eval("df <- data.frame(x, qScore, totalColumnScore, modelerScore, clineScore)");
-//            engine.eval("df.melted <- melt(df, id= 'x')");
-//            engine.eval("pop <- ggplot(data = df.melted, aes(x =x, y=value, color = variable)) + geom_line()");
-//            engine.eval("ggsave('/Users/gabe/Dropbox/happy.png', pop)");
-//            System.out.println("Done");
 
-
-            }catch(Exception e){
-                e.printStackTrace();
-            }
-
-    }
-
-    /**
-     * Get the conserved column numbers and their content from the benchmark database
-     * @param seqList List of sequences to get column numbers and content for
-     * @return ArrayList of String arrays representing the column number and their content
-     * @throws IOException
-     */
-    public static ArrayList<String[]> getGoodCols(ArrayList<String[]> seqList) throws IOException{
-
-        String seq = seqList.get(0)[1];
-        ArrayList<String[]> goodCols = new ArrayList<String[]>();
-
-
-        for (int i = 0; i < seq.length(); i ++) {
-            String colChar = "";
-            if (Character.isUpperCase(seq.charAt(i))) {
-                for (String[] aSeqList : seqList) {
-                    colChar += aSeqList[1].charAt(i);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                String[] colPos = new String[2];
-                colPos[0] = (String.valueOf(i));
-                colPos[1] = colChar;
-
-                goodCols.add(colPos);
-
-
 
             }
         }
-
-        return goodCols;
-
     }
+
+
 
     /**
      * Get the sequences from a file
@@ -201,7 +206,7 @@ public class AutoBench {
      * @return ArrayList of String array representing the sequences from the file
      * @throws IOException
      */
-    public static ArrayList<String[]> getSeqs(String dir, String input) throws IOException{
+    public static Sequence[] getSeqs(String dir, String input) throws IOException{
 
         FileReader fr = new FileReader(dir + "/" +  input);
 
@@ -214,7 +219,20 @@ public class AutoBench {
             count++;
         }
 
-        return seqList;
+        Sequence[] seqArray = new Sequence[seqList.size()];
+
+        for (int i = 0; i < seqList.size(); i++){
+            Sequence sequence = new Sequence(seqList.get(i)[0], seqList.get(i)[1]);
+            seqArray[i] = sequence;
+        }
+
+//        System.out.println("Done");
+
+
+
+
+
+        return seqArray;
     }
 
     /**
@@ -296,13 +314,13 @@ public class AutoBench {
      * @param subMatrix Substitution matrix
      * @return Profile representing the multiple sequence alignment
      */
-    public static HashProfile getMSA(ArrayList<String[]> seqs, int multiGapOpen, int multiGapExtend, SubstitutionMatrix subMatrix){
+    public static HashProfile getMSA(Sequence[] seqs, int multiGapOpen, int multiGapExtend, SubstitutionMatrix subMatrix){
 
         ArrayList<HashProfile> seqList = new ArrayList<HashProfile>();
 
-        for (String[] seq: seqs){
-            Sequence sequence = new Sequence(seq[0], seq[1]);
-            HashProfile profile = new HashProfile(sequence);
+        for (int i = 0; i < seqs.length; i++){
+//            Sequence sequence = new Sequence(seq[0], seq[1]);
+            HashProfile profile = new HashProfile(seqs[i]);
             seqList.add(profile);
         }
 
@@ -310,38 +328,75 @@ public class AutoBench {
 
     }
 
-    public static HashProfile getHMMMSA(ArrayList<String[]> seqs, double tau, double epsilon, double delta,
-                                            double emissionX, double emissionY, String type, SubstitutionMatrix subMatrix ){
+    public static HashProfile getHMMMSA(Sequence[] seqs, double tau, double epsilon, double delta,
+                                        double emissionX, double emissionY, String type, SubstitutionMatrix subMatrix ){
 
-        ArrayList<HashProfile> seqList = new ArrayList<HashProfile>();
+//        PairHMMUnderflow alignment = new PairHMMUnderflow(seqs, tau, epsilon, delta, emissionX, emissionY, subMatrix, "protein");
 
-        for (String[] seq: seqs) {
-            Sequence sequence = new Sequence(seq[0], seq[1]);
-            HashProfile profile = new HashProfile(sequence);
-            seqList.add(profile);
+        double [] start = {.95, 0.025, 0.025};
+
+//        double [][] transition = {
+//                {.95, .025, .025, 0.00009},
+//                {.6, .4, 0, 0.00009},
+//                {.6, 0, .4, 0.00009}};
+
+        double [][] transition = {
+                {.9, .05, .05, 0.1},
+                {.3, .7, 0, 0.1},
+                {.3, 0, .7, 0.1}};
+
+
+        double [][] emission = {
+                {.05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05},
+                {.05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05},
+                {.05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05}};
+
+        PairHMMUnderflow alignment = new PairHMMUnderflow(seqs, start, transition, emission, subMatrix, false, "protein");
+
+        HashProfile profile = new HashProfile("DEFAULT");
+
+        if (type.equals("viterbi")){
+            profile = alignment.getViterbiAlignment();
+
         }
 
-        return alignHMMRecursive(seqList.get(0), seqList.get(1), seqList, tau, epsilon, delta, emissionX,
-                emissionY, subMatrix, type, 1);
-
-
+        else if (type.equals("mea")){
+            profile = alignment.getMEAAlignment(1);
         }
 
-    public static HashProfile getHMMBW(ArrayList<String[]> seqs, double tau, double epsilon, double delta,
+        return profile;
+
+//        ArrayList<HashProfile> seqList = new ArrayList<HashProfile>();
+
+//        for (String[] seq: seqs) {
+//            Sequence sequence = new Sequence(seq[0], seq[1]);
+//            HashProfile profile = new HashProfile(sequence);
+//            seqList.add(profile);
+//        }
+//
+//        Sequence[] seqArray = new Sequence[seqList.size()];
+
+//        return alignHMMRecursive(seqs, tau, epsilon, delta, emissionX,
+//                emissionY, subMatrix, type, 1);
+
+
+    }
+
+    public static HashProfile getHMMBW(Sequence[] seqs, double tau, double epsilon, double delta,
                                        double emissionX, double emissionY, String type, SubstitutionMatrix subMatrix){
 
-        ArrayList<HashProfile> seqList = new ArrayList<HashProfile>();
+//        ArrayList<HashProfile> seqList = new ArrayList<HashProfile>();
 
-        for (String[] seq: seqs) {
-            Sequence sequence = new Sequence(seq[0], seq[1]);
-            HashProfile profile = new HashProfile(sequence);
-            seqList.add(profile);
-        }
+//        for (String[] seq: seqs) {
+//            Sequence sequence = new Sequence(seq[0], seq[1]);
+//            HashProfile profile = new HashProfile(sequence);
+//            seqList.add(profile);
+//        }
 
-        return alignHMMRecursive(seqList.get(0), seqList.get(1), seqList, tau, epsilon, delta, emissionX,
+        return alignHMMRecursive(seqs, tau, epsilon, delta, emissionX,
                 emissionY, subMatrix, type, 1);
 
-        }
+    }
 
 
 
@@ -384,10 +439,12 @@ public class AutoBench {
 
     }
 
-    public static HashProfile alignHMMRecursive (HashProfile first, HashProfile second, ArrayList<HashProfile>
-            seqList, double tau, double epsilon, double delta, double emissionX, double emissionY,
-                                                     SubstitutionMatrix subMatrix, String type, int counter){
-        PairHMM alignment = new PairHMM(first, second, tau, epsilon, delta, emissionX, emissionY, subMatrix);
+    public static HashProfile alignHMMRecursive (Sequence[]
+                                                         seqList, double tau, double epsilon, double delta, double emissionX, double emissionY,
+                                                 SubstitutionMatrix subMatrix, String type, int counter){
+
+
+        PairHMM alignment = new PairHMM(seqList, tau, epsilon, delta, emissionX, emissionY, subMatrix, type);
 
         HashProfile profile = new HashProfile("DEFAULT");
 
@@ -397,15 +454,15 @@ public class AutoBench {
         }
 
         else if (type.equals("mea")){
-            profile = alignment.getMEAAlignment();
+            profile = alignment.getMEAAlignment(1);
         }
 
         counter ++;
-        if (counter < seqList.size()){
+        if (counter < seqList.length){
 
-            System.out.println("Profile is " + profile);
+//            System.out.println("Profile is " + profile);
 
-            return alignHMMRecursive(profile, seqList.get(counter), seqList, tau, epsilon, delta, emissionX,
+            return alignHMMRecursive(seqList, tau, epsilon, delta, emissionX,
                     emissionY, subMatrix,type, counter);
         }
 
@@ -419,26 +476,27 @@ public class AutoBench {
     }
 
 
-    public static void writeToFile(HashProfile msa, String type, String fileName) throws IOException{
+    public static void writeToFile(HashProfile msa, String type, String fileName, int open, int extend) throws IOException{
 
         try {
+//            File file = new File("/Users/gabe/Dropbox/POA_TEST/" + fileName + "_" + type + "_zerodot" + open + "_zerodot" + extend);
 
-            File file = new File("/Users/gabe/Dropbox/JavaTest/" + fileName + "_" + type);
+            File file = new File("/Users/gabe/Dropbox/POA_TEST/" + fileName + "_" + type + open + "_" + extend);
             // if file doesnt exists, then create it
-        if (!file.exists()) {
-            file.createNewFile();
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            FileWriter fw = new FileWriter(file.getAbsoluteFile());
+            BufferedWriter bw = new BufferedWriter(fw);
+            bw.write(msa.toString());
+            bw.close();
+
+            System.out.println("Done");
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        FileWriter fw = new FileWriter(file.getAbsoluteFile());
-        BufferedWriter bw = new BufferedWriter(fw);
-        bw.write(msa.toString());
-        bw.close();
-
-        System.out.println("Done");
-
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
     }
 
     public static String[] runQScore(String type, String fileName) throws IOException{
@@ -447,7 +505,7 @@ public class AutoBench {
 
 
 
-        String command = "/usr/local/bin/qscore -test " + fileName + "_" + type + " -ref " + fileName + " -cline -modeler";
+        String command = "/usr/local/bin/qscore -test " + fileName + "_" + type + " -ref ./ref/" + fileName + " -cline -modeler";
 //        String command = "pwd";
         System.out.println(command);
 
@@ -466,8 +524,8 @@ public class AutoBench {
                 output.append(line);
             }
         } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            e.printStackTrace();
+        }
 
         //TODO: Make this a function: add ; to end of string
         System.out.println("TYPE IS " + type);
@@ -557,27 +615,51 @@ public class AutoBench {
 //        for (int i = 0; i < 4; i ++){
 //            Rengine engine = new Rengine(new String[] { "--no-save"}, false, null);
 
-            String firstQScore = first[0];
-            String secondQScore = second[0];
-            String thirdQScore = third[0];
-            engine.eval("require(ggplot2)");
-            engine.eval("require(reshape2)");
-            engine.eval(firstID + " <- " + firstQScore);
-            engine.eval(secondID + " <- " + secondQScore);
-            engine.eval(thirdID + "<-" + thirdQScore);
-            engine.eval("x <- " + first[4]);
-            engine.eval("df <- data.frame(x, " + firstID + ", " + secondID + ", " + thirdID + ")");
-            engine.eval("df.melted <- melt(df, id= 'x')");
-            engine.eval("pop <- ggplot(data = df.melted, aes(x =x, y=value, color = variable)) + geom_line() + ggtitle('" + title + "') + labs(x='Dataset', y='Q Score')");
-            engine.eval("ggsave('/Users/gabe/Dropbox/OutputTest/+ "+ title + ".png', pop)");
-            System.out.println("Done");
+        String firstQScore = first[0];
+        String secondQScore = second[0];
+        String thirdQScore = third[0];
+        engine.eval("require(ggplot2)");
+        engine.eval("require(reshape2)");
+        engine.eval(firstID + " <- " + firstQScore);
+        engine.eval(secondID + " <- " + secondQScore);
+        engine.eval(thirdID + "<-" + thirdQScore);
+        engine.eval("x <- " + first[4]);
+        engine.eval("df <- data.frame(x, " + firstID + ", " + secondID  + ", " + thirdID +  ")");
+        engine.eval("df.melted <- melt(df, id= 'x')");
+        engine.eval("pop <- ggplot(data = df.melted, aes(x =x, y=value, color = variable)) + geom_line() + geom_point() + ggtitle('" + title + "') + labs(x='Dataset', y='Q Score')");
+        engine.eval("ggsave('/Users/gabe/Dropbox/OutputTest/+ "+ title + ".png', pop)");
+        System.out.println("Done");
+
+
+    }
+
+    public static void plotComparison(String[] first, String[] second, String firstID, String secondID, String title, Rengine engine){
+
+
+
+
+//        for (int i = 0; i < 4; i ++){
+//            Rengine engine = new Rengine(new String[] { "--no-save"}, false, null);
+
+        String firstQScore = first[0];
+        String secondQScore = second[0];
+        engine.eval("require(ggplot2)");
+        engine.eval("require(reshape2)");
+        engine.eval(firstID + " <- " + firstQScore);
+        engine.eval(secondID + " <- " + secondQScore);
+        engine.eval("x <- " + first[4]);
+        engine.eval("df <- data.frame(x, " + firstID + ", " + secondID  +  ")");
+        engine.eval("df.melted <- melt(df, id= 'x')");
+        engine.eval("pop <- ggplot(data = df.melted, aes(x =x, y=value, color = variable)) + geom_point() + ggtitle('" + title + "') + labs(x='Dataset', y='Q Score')");
+        engine.eval("ggsave('/Users/gabe/Dropbox/OutputTest/+ "+ title + ".png', pop)");
+        System.out.println("Done");
 
 
     }
 
     public static void plotSingle(String[] first, String firstID, Rengine engine){
 
-        System.out.println(firstID + "and here it is: " + first[2]);
+        System.out.println(firstID + "and here it is: " + first[0]);
 
         String qScore = first[0];
         String totalColumnScore = first[1];
@@ -587,19 +669,41 @@ public class AutoBench {
 
 //        Rengine engine = new Rengine(new String[] { "--no-save"}, false, null);
 
-            engine.eval("require(ggplot2)");
-            engine.eval("require(reshape2)");
-            engine.eval("qScore <- " + qScore);
-            engine.eval("totalColumnScore <- " + totalColumnScore);
-            engine.eval("modelerScore <- " + modelerScore);
-            engine.eval("clineScore <- " + clineScore);
-            engine.eval("x <- " + dataSets);
-            engine.eval("df <- data.frame(x, qScore, totalColumnScore, modelerScore, clineScore)");
-            engine.eval("df.melted <- melt(df, id= 'x')");
-            engine.eval("pop <- ggplot(data = df.melted, aes(x =x, y=value, color = variable)) + geom_line()");
-            engine.eval("ggsave('/Users/gabe/Dropbox/OutputTest/" + firstID + ".png', pop)");
-            System.out.println("Done");
+        engine.eval("require(ggplot2)");
+        engine.eval("require(reshape2)");
+        engine.eval("qScore <- " + qScore);
+        engine.eval("totalColumnScore <- " + totalColumnScore);
+        engine.eval("modelerScore <- " + modelerScore);
+        engine.eval("clineScore <- " + clineScore);
+        engine.eval("x <- " + dataSets);
+        engine.eval("df <- data.frame(x, qScore, totalColumnScore, modelerScore, clineScore)");
+        engine.eval("df.melted <- melt(df, id= 'x')");
+        engine.eval("pop <- ggplot(data = df.melted, aes(x =x, y=value, color = variable)) + geom_line()");
+        engine.eval("ggsave('/Users/gabe/Dropbox/OutputTest/" + firstID + ".png', pop)");
+        System.out.println("Done");
 
+    }
+
+    public static void runBW(String dir) throws  IOException{
+        File file = new File(dir);
+
+        // array of files and directory
+        String[] inputs = file.list();
+        ArrayList<String> fullSeqs = new ArrayList<String>();
+        for (String input: inputs){
+            Sequence[] seqs = getSeqs(dir, input);
+            for (Sequence seq: seqs){
+                fullSeqs.add(seq.getSeq());
+            }
+
+
+        }
+        String[] seqArray = fullSeqs.toArray(new String[0]);
+        BaumWelchMulti bw = new BaumWelchMulti(seqArray, "protein");
+        MatrixUtils.printMatrix(bw.getEmission());
+        MatrixUtils.printMatrix(bw.getTransition());
+        System.out.println(bw.getEmission());
+        System.out.println(bw.getTransition());
     }
 
 
