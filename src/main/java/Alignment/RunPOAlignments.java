@@ -48,7 +48,7 @@ public class RunPOAlignments {
 
     public static void runPONW() {
 
-        MSA alignment = new MSA("/Users/gabe/Dropbox/Code/!Files/MEAPOA/test.fasta");
+        MSA alignment = new MSA("/Users/gabe/Dropbox/Code/!Files/MEAPOA/singleDist.fasta");
         alignment.saveMSA("/Users/gabe/Dropbox/Code/!Files/MEAPOA/latestoutput");
     }
 

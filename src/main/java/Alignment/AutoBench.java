@@ -444,7 +444,7 @@ public class AutoBench {
                                                  SubstitutionMatrix subMatrix, String type, int counter){
 
 
-        PairHMM alignment = new PairHMM(seqList, tau, epsilon, delta, emissionX, emissionY, subMatrix, type);
+        PairHMMUnderflow alignment = new PairHMMUnderflow(seqList, tau, epsilon, delta, emissionX, emissionY, subMatrix, type);
 
         HashProfile profile = new HashProfile("DEFAULT");
 
